@@ -3,10 +3,12 @@ import typing
 class Mission:
     id: int
     name: str
+    story_level: int
 
-    def __init__(self, _id: int, name: str):
+    def __init__(self, _id: int, name: str, story_level: int):
         self.id = _id
         self.name = name
+        self.story_level = story_level
 
     def __str__(self) -> str:
         return (
@@ -15,58 +17,58 @@ class Mission:
     
 # Unused missions (outside of Dummy00) are omitted from this list
 all_missions: typing.Tuple[Mission, ...] = (
-    Mission(0, "Dummy00"),
-    Mission(1, "Stop Terrorist Threat"),
-    Mission(2, "Remove Gun Emplacement"),
-    Mission(3, "Rescue Survey Team"),
-    Mission(4, "Terrorist Pursuit"),
-    Mission(5, "Worker Robot Removal"),
-    Mission(6, "Secret Factory Recon"),
-    Mission(7, "Exterminate Organisms(1)"),
-    Mission(8, "Guard Freight Train"),
-    Mission(9, "Destroy Fuel Depot"),
-    Mission(10, "Prototype MT Test(1)"),
-    Mission(11, "Guard Airplane"),
-    Mission(12, "Stop Gas Exposure"),
-    Mission(13, "Prototype MT Test(2)"),
-    Mission(14, "Repulse Enemy Attack"),
-    Mission(15, "Exterminate Organisms(2)"),
-#   Mission(16, "16 Omitted"),
-    Mission(17, "Guard Wharf Warehouse"),
-    Mission(18, "Remove Base Occupants"),
-    Mission(19, "Destroy Space Catapult"),
-    Mission(20, "Destroy Base Generator"),
-    Mission(21, "Mop Up Chrom Remnants"),
-    Mission(22, "Destroy \"Justice\""),
-    Mission(23, "Chrome Uprising"),
-    Mission(24, "Destroy Plus Escapee"),
-    Mission(25, "Destroy Intruders"),
-    Mission(26, "Destroy Plane Computer"),
-    Mission(27, "AC Battle(1)"),
-    Mission(28, "Attack Urban Center"),
-#   Mission(29, "29 Omitted"),
-    Mission(30, "Eliminate Squatters(1)"),
-    Mission(31, "Eliminate Squatters(2)"),
-    Mission(32, "Destroy Uknown MTs"),
-    Mission(33, "Rescue Transport Truck"),
-    Mission(34, "Eliminate Strikers"),
-    Mission(35, "Stop Security MTs"),
-    Mission(36, "Stop Gang, \"Dark Soul\""),
-    Mission(37, "Reclaim Oil Facility"),
-    Mission(38, "Recover Capsules"),
-#   Mission(39, "39 Omitted"),
-    Mission(40, "Guard Factory Entrance"),
-    Mission(41, "Capture Space Station"),
-    Mission(42, "Release Organisms"),
-    Mission(43, "Retake Air Cleaner"),
-    Mission(44, "Kill \"Struggle\" Leader"),
-    Mission(45, "Stop Security MT"),
-    Mission(46, "Destroy Base Computer"),
-    Mission(47, "Mop Up Chrome Remnants"),
-    Mission(48, "Destroy Floating Mines"),
-#   Mission(49, "Destruction of Ravens"),
-    Mission(50, "AC Battle")
-#   Mission(51, "~~~~~~~~~") etc
+    Mission(0x0, "Dummy00", 0),
+    Mission(0x1, "Stop Terrorist Threat", 6),
+    Mission(0x2, "Remove Gun Emplacement", 5),
+    Mission(0x3, "Rescue Survey Team", 7),
+    Mission(0x4, "Terrorist Pursuit", 8),
+    Mission(0x5, "Worker Robot Removal", 6),
+    Mission(0x6, "Secret Factory Recon", 12),
+    Mission(0x7, "Exterminate Organisms(1)", 14),
+    Mission(0x8, "Guard Freight Train", 10),
+    Mission(0x9, "Destroy Fuel Depot", 9),
+    Mission(0xa, "Prototype MT Test(1)", 11),
+    Mission(0xb, "Guard Airplane", 17),
+    Mission(0xc, "Stop Gas Exposure", 20),
+    Mission(0xd, "Prototype MT Test(2)", 16),
+    Mission(0xe, "Repulse Enemy Attack", 14),
+    Mission(0xf, "Exterminate Organisms(2)", 21),
+#   Mission(0x10, "16 Omitted", 0),
+    Mission(0x11, "Guard Wharf Warehouse", 13),
+    Mission(0x12, "Remove Base Occupants", 19),
+    Mission(0x13, "Destroy Space Catapult", 21),
+    Mission(0x14, "Destroy Base Generator", 23),
+    Mission(0x15, "Mop Up Chrome Remnants(1)", 24),
+    Mission(0x16, "Destroy \"Justice\"", 23),
+    Mission(0x17, "Chrome Uprising", 23),
+    Mission(0x18, "Destroy Plus Escapee", 14),
+    Mission(0x19, "Destroy Intruders", 21),
+    Mission(0x1a, "Destroy Plane Computer", 16),
+    Mission(0x1b, "AC Battle(1)", 18),
+    Mission(0x1c, "Attack Urban Center", 9),
+#   Mission(0x1d, "29 Omitted", 0),
+    Mission(0x1e, "Eliminate Squatters(1)", 1),
+    Mission(0x1f, "Eliminate Squatters(2)", 5),
+    Mission(0x20, "Destroy Unknown MTs", 2),
+    Mission(0x21, "Rescue Transport Truck", 4),
+    Mission(0x22, "Eliminate Strikers", 1),
+    Mission(0x23, "Stop Security MTs", 3),
+    Mission(0x24, "Stop Gang, \"Dark Soul\"", 13),
+    Mission(0x25, "Reclaim Oil Facility", 2),
+    Mission(0x26, "Recover Capsules", 15),
+#   Mission(0x27, "39 Omitted", 0),
+    Mission(0x28, "Guard Factory Entrance", 12),
+    Mission(0x29, "Capture Space Station", 22),
+    Mission(0x2a, "Release Organisms", 18),
+    Mission(0x2b, "Retake Air Cleaner", 22),
+    Mission(0x2c, "Kill \"Struggle\" Leader", 18),
+    Mission(0x2d, "Stop Security MT", 13),
+    Mission(0x2e, "Destroy Base Computer", 17),
+    Mission(0x2f, "Mop Up Chrome Remnants(2)", 24),
+    Mission(0x30, "Destroy Floating Mines", 26),
+#   Mission(0x31, "Destruction of Ravens", 27),
+    Mission(0x32, "AC Battle(2)", 25)
+#   Mission(0x33, "~~~~~~~~~", 0) etc
 )
 
 id_to_mission = {mission.id: mission for mission in all_missions}
