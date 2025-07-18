@@ -2,7 +2,7 @@ import typing
 
 from BaseClasses import Item, ItemClassification
 from .utils import Constants
-from .mission import Mission, all_missions, name_to_mission
+from .mission import all_missions, name_to_mission
 
 item_id_to_item_name: typing.Dict[int, str] = {}
 

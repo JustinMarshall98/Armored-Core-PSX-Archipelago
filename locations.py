@@ -5,7 +5,7 @@ from .mission import Mission, all_missions
 from .utils import Constants
 
 def get_location_name_for_mission(mission: Mission) -> str:
-    return f"{mission.name}"
+    return f"{mission.name} Completed"
 
 def get_location_id_for_mission_id(mission_id: int) -> int:
     return Constants.MISSION_COMPLETION_OFFSET + mission_id
