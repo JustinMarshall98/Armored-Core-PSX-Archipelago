@@ -5,10 +5,11 @@ from worlds.AutoWorld import World, WebWorld
 from BaseClasses import CollectionState, Region, Tutorial, LocationProgressType
 from worlds.generic.Rules import set_rule
 
+from .client import ACClient
 from .utils import Constants
 from .mission import Mission, all_missions, STARTING_MISSION, VICTORY_MISSION
-from .items import ACItem, create_item as fabricate_item
-from .locations import MissionLocation, get_location_name_for_mission
+from .items import ACItem, create_item as fabricate_item, item_name_to_item_id, create_victory_event
+from .locations import MissionLocation, get_location_name_for_mission, location_name_to_id as location_map
 from .options import ACOptions, GoalRequirement
 
 class ACWeb(WebWorld):
@@ -32,6 +33,9 @@ class ACWorld(World):
     options: ACOptions
     required_client_version = (0, 5, 0)
     web = ACWeb()
+
+    location_name_to_id = location_map
+    item_name_to_id = item_name_to_item_id
 
     mission_unlock_order: typing.List[Mission]
 
@@ -70,7 +74,11 @@ class ACWorld(World):
             if mission is not STARTING_MISSION and mission.name != Constants.VICTORY_MISSION_NAME:
                 itempool.append(self.create_item(mission.name))
 
-        # No filler yet
+        # Generate filler
+        # Basically dummied out 'credit' while testing world gen
+
+        filler_slots: int = len(mission_list_region.locations) - len(itempool)
+        itempool += [self.create_item("Credit") for c in range(filler_slots)][:filler_slots]
 
         # Set Destroy Floating Mines Completed as goal item
 
@@ -80,13 +88,15 @@ class ACWorld(World):
             if m is not VICTORY_MISSION:
                 mission_completion_names.append(get_location_name_for_mission(m))
         # Destroy Floating Mines will appear after the number of missions specified have been completed
-        set_rule(destroy_floating_mines_location, lambda state: state.has_from_list(mission_completion_names, self.player, self.options.goal_requirement))
+        set_rule(destroy_floating_mines_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, self.options.goal_requirement))
+        destroy_floating_mines_location.place_locked_item(create_victory_event(self.player))
+        mission_list_region.locations.append(destroy_floating_mines_location)
 
         self.multiworld.itempool.extend(itempool)
 
         menu_region.connect(mission_list_region)
         self.multiworld.regions.append(mission_list_region)
-        self.multiworld.reginos.append(menu_region)
+        self.multiworld.regions.append(menu_region)
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
         return {

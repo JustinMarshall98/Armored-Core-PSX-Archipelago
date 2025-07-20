@@ -10,6 +10,9 @@ item_id_to_item_name: typing.Dict[int, str] = {}
 for mission in all_missions:
     item_id_to_item_name[mission.id + Constants.MISSION_COMPLETION_OFFSET] = mission.name
 
+# Credit ID is 0
+item_id_to_item_name[0] = "Credit"
+
 
 # Reverse item_id_to_item_name
 item_name_to_item_id: typing.Dict[str, int] = {value: key for key, value in item_id_to_item_name.items()}

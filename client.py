@@ -35,10 +35,12 @@ class ACClient(BizHawkClient):
             # this import down here to prevent circular import issue
             from CommonClient import logger
             # Check ROM name/patch version
-            rom_name_bytes = ((await bizhawk.read(ctx.bizhawk_ctx, [(0xD368, 27, "ROM")]))[0])
-            rom_name = bytes([byte for byte in rom_name_bytes if byte != 0]).decode("ascii")
-            logger.info(rom_name + " rom_name")
-            if not rom_name.startswith("Armored Core 1"):
+            # Unable to locate rom name, verifying based on memory card id instead
+            # If you know what the rom memory domain for PSX is on Bizhawk please let me know!
+            mem_card_id_bytes = ((await bizhawk.read(ctx.bizhawk_ctx, [(0x4B6BD, 12, MAIN_RAM)]))[0])
+            mem_card_id = bytes([byte for byte in mem_card_id_bytes if byte != 0]).decode("ascii")
+            logger.info(mem_card_id + " mem_card_id")
+            if not mem_card_id.startswith("BASCUS-94182"):
                 return False
         except UnicodeDecodeError:
             return False
@@ -55,7 +57,7 @@ class ACClient(BizHawkClient):
     
     async def read_mission_completion(self, ctx: "BizHawkClientContext") -> typing.List[bool]:
         byte_list_missions: typing.List[bytes] = []
-        for mission_number in range(all_missions.count):
+        for mission_number in range(len(all_missions)):
             # Don't read mission completion for omitted missions
             byte_list_missions.append((await bizhawk.read(
             ctx.bizhawk_ctx, [(Constants.MISSION_COMPLETION_OFFSET + all_missions[mission_number].story_level, 1, MAIN_RAM)]
@@ -72,7 +74,19 @@ class ACClient(BizHawkClient):
         # Mission list code needs to be updated on the fly by the client
         # Guarded Write confirms we are in ravens nest menu at the time of writing
 
-        code_as_hex: typing.List[int]
+        # Hooks into mission list write function
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.FREESPACE_CODE_OFFSET,
+                    code_as_hex,
+                    MAIN_RAM
+                )],[(
+                    Constants.FREESPACE_CODE_OFFSET,
+                    [0x43,0x64,0x49,0x6E],
+                    MAIN_RAM
+                )])
+
+        # Freespace we write to to update mission list as new mission checks are received
+        code_as_hex: typing.List[int] = []
         #lui r1,0x801f
         #addu r1,r1,r16
         code_as_string: str = "1F80013C2108300"
@@ -84,18 +98,18 @@ class ACClient(BizHawkClient):
         for item in ctx.items_received:
                 if is_mission_location_id(item.item):
                     mission: Mission = mission_from_location_id(item.item)
-                    code_as_string += construct_new_mission_code_entry(mission.id, mission_counter, number_of_missions)
+                    code_as_string += self.construct_new_mission_code_entry(mission.id, mission_counter, number_of_missions)
                     mission_counter += 1
         code_as_string += "0000000000000324D43723A0891C020800000000"
-        for i in range(0, code_as_string.count + 2, 2):
-            code_as_hex.append(int(code_as_string[i:i+1]))
+        for i in range(0, len(code_as_string), 2):
+            code_as_hex.append(int(code_as_string[i:i+2], 16))
         await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
                     Constants.FREESPACE_CODE_OFFSET,
                     code_as_hex,
                     MAIN_RAM
                 )],[(
                     Constants.FREESPACE_CODE_OFFSET,
-                    [0x4364496E],
+                    [0x43,0x64,0x49,0x6E],
                     MAIN_RAM
                 )])
         
@@ -140,8 +154,7 @@ class ACClient(BizHawkClient):
 
             # Unlock missions based on what has been received
 
-            for item in ctx.items_received:
-                if is_mission_location_id(item.item):
+            await self.update_mission_list_code(ctx)
 
 
 

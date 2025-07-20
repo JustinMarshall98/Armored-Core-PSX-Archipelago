@@ -8,12 +8,12 @@ class GoalRequirement(Range):
     """
     In this version the goal is always completing Destroy Floating Mines.
     Choose the number of missions that must be completed to unlock it.
-    The tutorial mission is counted.
+    The tutorial mission is not counted.
     """
     display_name = "Goal Requirement"
     range_start = 1
-    range_end = 46
-    default = 46
+    range_end = 45
+    default = 45
 
 @dataclass
 class ACOptions(PerGameCommonOptions):
