@@ -1,7 +1,7 @@
 import typing
 
 from BaseClasses import Location, Region, LocationProgressType, Item
-from .mission import Mission, all_missions
+from .mission import Mission, all_missions, id_to_mission
 from .utils import Constants
 
 def get_location_name_for_mission(mission: Mission) -> str:
@@ -12,6 +12,13 @@ def get_location_id_for_mission_id(mission_id: int) -> int:
 
 def get_location_id_for_mission(mission: Mission) -> int:
     return get_location_id_for_mission_id(mission.id)
+
+def is_mission_location_id(location_id: int) -> bool:
+    return (location_id - Constants.MISSION_COMPLETION_OFFSET) in id_to_mission
+
+def mission_from_location_id(location_id: int) -> Mission:
+    return id_to_mission[location_id - Constants.MISSION_COMPLETION_OFFSET]
+
 
 class ACLocation(Location):
     game: str
