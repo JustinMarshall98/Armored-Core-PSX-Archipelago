@@ -100,5 +100,5 @@ class ACWorld(World):
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
         return {
-            #Whatever options we need the client to know
+            Constants.GAME_OPTIONS_KEY: self.options.serialize()
         }

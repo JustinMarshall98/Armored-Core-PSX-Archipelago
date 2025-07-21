@@ -70,7 +70,7 @@ class ACClient(BizHawkClient):
                 mission_completed_flags.append(False)
         return mission_completed_flags
     
-    async def update_mission_list_code(self, ctx: "BizHawkClientContext") -> None:
+    async def update_mission_list_code(self, ctx: "BizHawkClientContext", add_goal: bool) -> None:
         # Mission list code needs to be updated on the fly by the client
         # Guarded Write confirms we are in ravens nest menu at the time of writing
 
@@ -79,7 +79,7 @@ class ACClient(BizHawkClient):
         # Hooks into mission list write routine
         await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
                     Constants.MISSION_MENU_HOOK_OFFSET,
-                    [0xB4, 0x44, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+                    [0x18, 0xFE, 0x05, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
                     MAIN_RAM
                 )],[(
                     Constants.MISSION_MENU_HOOK_OFFSET,
@@ -94,6 +94,8 @@ class ACClient(BizHawkClient):
         code_as_string: str = "1F80013C21083000"
         mission_counter: int = 0
         number_of_missions: int = 0
+        if add_goal:
+            number_of_missions += 1
         for item in ctx.items_received:
                 if is_mission_location_id(item.item):
                     number_of_missions += 1
@@ -102,12 +104,20 @@ class ACClient(BizHawkClient):
                     mission: Mission = mission_from_location_id(item.item)
                     code_as_string += self.construct_new_mission_code_entry(mission.id, mission_counter, number_of_missions)
                     mission_counter += 1
+        if add_goal:
+            goal_mission: Mission = all_missions[-2] # Destroy Floating Mines
+            code_as_string += self.construct_new_mission_code_entry(goal_mission.id, mission_counter, number_of_missions)
+            mission_counter += 1 # Not strictly necessary if this is always last
         code_as_string += "0000000000000324D43723A0891C020800000000"
         for i in range(0, len(code_as_string), 2):
             code_as_hex.append(int(code_as_string[i:i+2], 16))
-        await bizhawk.write(ctx.bizhawk_ctx, [(
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
                     Constants.FREESPACE_CODE_OFFSET,
                     code_as_hex,
+                    MAIN_RAM
+                )],[(
+                    Constants.MENU_CURRENT_SELECTION_OFFSET,
+                    [0x02],
                     MAIN_RAM
                 )])
         
@@ -136,7 +146,6 @@ class ACClient(BizHawkClient):
     
     async def set_mission_list_display_all(self, ctx: "BizHawkClientContext") -> None:
         # Guarded write ensures we do this only when the menu is open
-        #from CommonClient import logger
 
         await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
                     Constants.MISSION_LIST_MODE_OFFSET,
@@ -144,7 +153,7 @@ class ACClient(BizHawkClient):
                     MAIN_RAM
                 )],[(
                     Constants.MISSION_MENU_HOOK_OFFSET,
-                    [0x1F, 0x80, 0x01, 0x3C, 0x21, 0x08, 0x30, 0x00, 0xD4, 0x37, 0x23, 0xA0],
+                    [0x18, 0xFE, 0x05, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
                     MAIN_RAM
                 )])
 
@@ -162,20 +171,26 @@ class ACClient(BizHawkClient):
                 }])
                 ctx.finished_game = True
 
+            # Read mission completion locations
+            completed_missions_flags: typing.List[bool] = await self.read_mission_completion(ctx)
+
+
             # Items received handling
+
+            # Check to see if the goal mission should be unlocked
+            add_goal_to_list: bool = False
+            if (sum(completed_missions_flags) >= ctx.slot_data[Constants.GAME_OPTIONS_KEY]["goal_requirement"]):
+                add_goal_to_list = True
 
             # Unlock missions based on what has been received
 
-            await self.update_mission_list_code(ctx)
+            await self.update_mission_list_code(ctx, add_goal_to_list)
 
-
+            
 
             # Local checked checks handling
 
             new_local_check_locations: typing.Set[int]
-
-            # Read mission completion locations
-            completed_missions_flags: typing.List[bool] = await self.read_mission_completion(ctx)
 
             missions_to_completed: typing.Dict[Mission, bool] = {
                 m: c for m, c in zip(all_missions, completed_missions_flags)
