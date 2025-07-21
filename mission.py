@@ -17,7 +17,7 @@ class Mission:
     
 # Unused missions (outside of Dummy00) are omitted from this list
 all_missions: typing.Tuple[Mission, ...] = (
-    Mission(0x0, "Dummy00", 0),
+    Mission(0x0, "Raven Test", 0), # Named Dummy00 in game, name changed for player clarity
     Mission(0x1, "Stop Terrorist Threat", 6),
     Mission(0x2, "Remove Gun Emplacement", 5),
     Mission(0x3, "Rescue Survey Team", 7),

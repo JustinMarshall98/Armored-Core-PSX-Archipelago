@@ -60,11 +60,11 @@ class ACClient(BizHawkClient):
         for mission_number in range(len(all_missions)):
             # Don't read mission completion for omitted missions
             byte_list_missions.append((await bizhawk.read(
-            ctx.bizhawk_ctx, [(Constants.MISSION_COMPLETION_OFFSET + all_missions[mission_number].story_level, 1, MAIN_RAM)]
+            ctx.bizhawk_ctx, [(Constants.MISSION_COMPLETION_OFFSET + all_missions[mission_number].id, 1, MAIN_RAM)]
             ))[0])
         mission_completed_flags: typing.List[bool] = []
         for byte in byte_list_missions:
-            if int.from_bytes(byte) == 2:
+            if int.from_bytes(byte) > 0:
                 mission_completed_flags.append(True)
             else:
                 mission_completed_flags.append(False)
@@ -74,14 +74,16 @@ class ACClient(BizHawkClient):
         # Mission list code needs to be updated on the fly by the client
         # Guarded Write confirms we are in ravens nest menu at the time of writing
 
-        # Hooks into mission list write function
+        await self.set_mission_list_display_all(ctx)
+
+        # Hooks into mission list write routine
         await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
-                    Constants.FREESPACE_CODE_OFFSET,
-                    code_as_hex,
+                    Constants.MISSION_MENU_HOOK_OFFSET,
+                    [0xB4, 0x44, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
                     MAIN_RAM
                 )],[(
-                    Constants.FREESPACE_CODE_OFFSET,
-                    [0x43,0x64,0x49,0x6E],
+                    Constants.MISSION_MENU_HOOK_OFFSET,
+                    [0x1F, 0x80, 0x01, 0x3C, 0x21, 0x08, 0x30, 0x00, 0xD4, 0x37, 0x23, 0xA0],
                     MAIN_RAM
                 )])
 
@@ -89,7 +91,7 @@ class ACClient(BizHawkClient):
         code_as_hex: typing.List[int] = []
         #lui r1,0x801f
         #addu r1,r1,r16
-        code_as_string: str = "1F80013C2108300"
+        code_as_string: str = "1F80013C21083000"
         mission_counter: int = 0
         number_of_missions: int = 0
         for item in ctx.items_received:
@@ -103,13 +105,9 @@ class ACClient(BizHawkClient):
         code_as_string += "0000000000000324D43723A0891C020800000000"
         for i in range(0, len(code_as_string), 2):
             code_as_hex.append(int(code_as_string[i:i+2], 16))
-        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+        await bizhawk.write(ctx.bizhawk_ctx, [(
                     Constants.FREESPACE_CODE_OFFSET,
                     code_as_hex,
-                    MAIN_RAM
-                )],[(
-                    Constants.FREESPACE_CODE_OFFSET,
-                    [0x43,0x64,0x49,0x6E],
                     MAIN_RAM
                 )])
         
@@ -117,24 +115,38 @@ class ACClient(BizHawkClient):
     def construct_new_mission_code_entry(self, mission_id: int, mission_counter: int, number_of_missions: int) -> str:
         new_code_entry: str = ""
         # The immediate value being written
-        if (mission_counter < 17):
+        if (mission_counter < 16):
             new_code_entry += "0" + hex(mission_counter)[2:]
         else:
             new_code_entry += hex(mission_counter)[2:]
         new_code_entry += "000224"
         # Branch by an additional 0xC(12) bytes for every mission entry
         branch_amount = (number_of_missions - mission_counter) * 3
-        if (branch_amount < 17):
+        if (branch_amount < 16):
             new_code_entry += "0" + hex(branch_amount)[2:]
         else:
             new_code_entry += hex(branch_amount)[2:]
         new_code_entry += "005010"
-        if (mission_id < 17):
+        if (mission_id < 16):
             new_code_entry += "0" + hex(mission_id)[2:]
         else:
             new_code_entry += hex(mission_id)[2:]
         new_code_entry += "000324"
         return new_code_entry
+    
+    async def set_mission_list_display_all(self, ctx: "BizHawkClientContext") -> None:
+        # Guarded write ensures we do this only when the menu is open
+        #from CommonClient import logger
+
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.MISSION_LIST_MODE_OFFSET,
+                    [0x00],
+                    MAIN_RAM
+                )],[(
+                    Constants.MISSION_MENU_HOOK_OFFSET,
+                    [0x1F, 0x80, 0x01, 0x3C, 0x21, 0x08, 0x30, 0x00, 0xD4, 0x37, 0x23, 0xA0],
+                    MAIN_RAM
+                )])
 
         
 
