@@ -10,8 +10,14 @@ item_id_to_item_name: typing.Dict[int, str] = {}
 for mission in all_missions:
     item_id_to_item_name[mission.id + Constants.MISSION_COMPLETION_OFFSET] = mission.name
 
-# Credit ID is 0
-item_id_to_item_name[0] = "Credit"
+# Victory Item
+item_id_to_item_name[Constants.VICTORY_ITEM_ID] = Constants.VICTORY_ITEM_NAME
+
+# Progressive Missions
+item_id_to_item_name[Constants.PROGRESSIVE_MISSION_ITEM_ID] = Constants.PROGRESSIVE_MISSION_ITEM_NAME
+
+# Credit
+item_id_to_item_name[Constants.CREDIT_ITEM_ID] = Constants.CREDIT_ITEM_NAME
 
 
 # Reverse item_id_to_item_name
@@ -21,7 +27,8 @@ class ACItem(Item):
     game: str = Constants.GAME_NAME
 
 def create_item(name: str, player_id: int) -> ACItem:
-    return ACItem(name, ItemClassification.progression if (name in name_to_mission)
+    return ACItem(name, ItemClassification.progression if (name in name_to_mission or
+                                                           name is Constants.PROGRESSIVE_MISSION_ITEM_NAME)
                       else ItemClassification.filler, item_name_to_item_id[name], player_id)
 
 def create_victory_event(player_id: int) -> ACItem:

@@ -39,7 +39,7 @@ class ACClient(BizHawkClient):
             # If you know what the rom memory domain for PSX is on Bizhawk please let me know!
             mem_card_id_bytes = ((await bizhawk.read(ctx.bizhawk_ctx, [(0x4B6BD, 12, MAIN_RAM)]))[0])
             mem_card_id = bytes([byte for byte in mem_card_id_bytes if byte != 0]).decode("ascii")
-            logger.info(mem_card_id + " mem_card_id")
+            logger.info(f"{mem_card_id} mem_card_id")
             if not mem_card_id.startswith("BASCUS-94182"):
                 return False
         except UnicodeDecodeError:
@@ -64,19 +64,46 @@ class ACClient(BizHawkClient):
             ))[0])
         mission_completed_flags: typing.List[bool] = []
         for byte in byte_list_missions:
-            if int.from_bytes(byte) > 0:
+            if int.from_bytes(byte) & 0x2 == 0x2:
                 mission_completed_flags.append(True)
             else:
                 mission_completed_flags.append(False)
         return mission_completed_flags
     
-    async def update_mission_list_code(self, ctx: "BizHawkClientContext", add_goal: bool) -> None:
+    # return: 0-5 indicates what part of the ravens nest menu we are hovering / in. -1 means we are not in the ravens nest menu.
+    async def ravens_nest_menu_check(self, ctx: "BizHawkClientContext") -> int:
+        # Not using guarded_write because it can't check for more than one possible result. I think this leads to less overall read operations
+        menu_verification: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.MENU_CURRENT_SELECTION1_VERIFY_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        if menu_verification == 0x20 or menu_verification == 0xE0:
+            return int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.MENU_CURRENT_SELECTION1_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        else:
+            menu_verification = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.MENU_CURRENT_SELECTION2_VERIFY_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+            if menu_verification == 0x20 or menu_verification == 0xE0:
+                return int.from_bytes((await bizhawk.read(
+                ctx.bizhawk_ctx, [(Constants.MENU_CURRENT_SELECTION2_OFFSET, 1, MAIN_RAM)]
+                ))[0])
+            else:
+                return -1
+    
+    async def update_mission_list_code(self, ctx: "BizHawkClientContext") -> None:
         # Mission list code needs to be updated on the fly by the client
-        # Guarded Write confirms we are in ravens nest menu at the time of writing
+        # ravens_nest_menu_check confirms we are in ravens nest menu at the time of writing (specifically missions section)
+        # Otherwise don't run this at all
+
+        in_menu: int = await self.ravens_nest_menu_check(ctx)
+        if in_menu != 2:
+            return
 
         await self.set_mission_list_display_all(ctx)
 
         # Hooks into mission list write routine
+        # OOF hardcoded this jump. If freespace changes this too must change unless you code better
         await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
                     Constants.MISSION_MENU_HOOK_OFFSET,
                     [0x18, 0xFE, 0x05, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -94,35 +121,44 @@ class ACClient(BizHawkClient):
         code_as_string: str = "1F80013C21083000"
         mission_counter: int = 0
         number_of_missions: int = 0
-        if add_goal:
-            number_of_missions += 1
-        for item in ctx.items_received:
-                if is_mission_location_id(item.item):
-                    number_of_missions += 1
-        for item in ctx.items_received:
-                if is_mission_location_id(item.item):
-                    mission: Mission = mission_from_location_id(item.item)
+        if ctx.slot_data[Constants.GAME_OPTIONS_KEY]["goal"] == 0: # Missionsanity
+            for item in ctx.items_received:
+                    if is_mission_location_id(item.item):
+                        number_of_missions += 1
+            for item in ctx.items_received:
+                    if is_mission_location_id(item.item):
+                        mission: Mission = mission_from_location_id(item.item)
+                        code_as_string += self.construct_new_mission_code_entry(mission.id, mission_counter, number_of_missions)
+                        mission_counter += 1
+        else: # Progressive Missions
+            progressive_missions_received: int = 0
+            for item in ctx.items_received:
+                if item.item == Constants.PROGRESSIVE_MISSION_ITEM_ID:
+                    progressive_missions_received += 1
+            # number_of_missions is 5 * progressive mission items up to 8 times, then the 9th is 1. 46 total in the end.
+            if progressive_missions_received < 9:
+                number_of_missions = 5 * (progressive_missions_received + 1)
+            else:
+                number_of_missions = 46
+            for mission in all_missions:
+                if mission.progression_level <= (progressive_missions_received + 1) and mission.progression_level != 0:
                     code_as_string += self.construct_new_mission_code_entry(mission.id, mission_counter, number_of_missions)
                     mission_counter += 1
-        if add_goal:
-            goal_mission: Mission = all_missions[-2] # Destroy Floating Mines
-            code_as_string += self.construct_new_mission_code_entry(goal_mission.id, mission_counter, number_of_missions)
-            mission_counter += 1 # Not strictly necessary if this is always last
         code_as_string += "0000000000000324D43723A0891C020800000000"
+        from CommonClient import logger
         for i in range(0, len(code_as_string), 2):
+            #logger.info(code_as_string[i:i+2])
             code_as_hex.append(int(code_as_string[i:i+2], 16))
-        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+        # Write instead of guarded write based on ravens nest menu check
+        await bizhawk.write(ctx.bizhawk_ctx, [(
                     Constants.FREESPACE_CODE_OFFSET,
                     code_as_hex,
-                    MAIN_RAM
-                )],[(
-                    Constants.MENU_CURRENT_SELECTION_OFFSET,
-                    [0x02],
                     MAIN_RAM
                 )])
         
 
     def construct_new_mission_code_entry(self, mission_id: int, mission_counter: int, number_of_missions: int) -> str:
+        #from CommonClient import logger
         new_code_entry: str = ""
         # The immediate value being written
         if (mission_counter < 16):
@@ -134,6 +170,7 @@ class ACClient(BizHawkClient):
         branch_amount = (number_of_missions - mission_counter) * 3
         if (branch_amount < 16):
             new_code_entry += "0" + hex(branch_amount)[2:]
+            #logger.info(hex(branch_amount))
         else:
             new_code_entry += hex(branch_amount)[2:]
         new_code_entry += "005010"
@@ -142,6 +179,7 @@ class ACClient(BizHawkClient):
         else:
             new_code_entry += hex(mission_id)[2:]
         new_code_entry += "000324"
+        #logger.info(new_code_entry)
         return new_code_entry
     
     async def set_mission_list_display_all(self, ctx: "BizHawkClientContext") -> None:
@@ -156,10 +194,53 @@ class ACClient(BizHawkClient):
                     [0x18, 0xFE, 0x05, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
                     MAIN_RAM
                 )])
-
         
+    async def award_credits(self, ctx: "BizHawkClientContext") -> None:
+        # We fail to award credits if we are not in the ravens nest menu at all
+        in_menu: int = await self.ravens_nest_menu_check(ctx)
+        if in_menu == -1:
+            return
+        
+        # Read how many credit items have been received
+        stored_credit_drops: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.CREDIT_ITEMS_RECEIVED_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        
+        received_credit_drops: int = 0
+        for item in ctx.items_received:
+                if item.item == Constants.CREDIT_ITEM_ID:
+                    received_credit_drops += 1
 
-
+        from CommonClient import logger
+        
+        if received_credit_drops > stored_credit_drops:
+            # Award the difference to the player. Currently each drop is hardcoded to be worth 5000
+            player_credit_bytes = (await bizhawk.read(
+                ctx.bizhawk_ctx, [(Constants.PLAYER_CREDITS_OFFSET, 4, MAIN_RAM)]
+                ))
+            player_credit: int = int.from_bytes(player_credit_bytes[0], "little")
+            logger.info(f"Player credits read as {player_credit}")
+            p1, p2, p3, p4 = (player_credit & 0xFFFFFFFF).to_bytes(4, "little")
+            player_credit = player_credit + ((received_credit_drops - stored_credit_drops) * 5000)
+            c1, c2, c3, c4 = (player_credit & 0xFFFFFFFF).to_bytes(4, "little")
+            logger.info(f"Attempting to award {(received_credit_drops - stored_credit_drops) * 5000}, new total should be {player_credit}")
+            logger.info(f"bytes {player_credit.to_bytes(4, "little")} and {player_credit_bytes} and {player_credit_bytes[0]} and {c1} {c2} {c3} {c4}")
+            # Guarded write based on read in credit amount. Stops things from messing up when the game is updating credit value
+            award_success: bool = await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.PLAYER_CREDITS_OFFSET,
+                    [c1, c2, c3, c4],
+                    MAIN_RAM
+                )],[(
+                    Constants.PLAYER_CREDITS_OFFSET,
+                    [p1, p2, p3, p4],
+                    MAIN_RAM
+                )])
+            if award_success:
+                await bizhawk.write(ctx.bizhawk_ctx, [(
+                    Constants.CREDIT_ITEMS_RECEIVED_OFFSET,
+                    [received_credit_drops],
+                    MAIN_RAM
+                )])
     
     async def game_watcher(self, ctx: "BizHawkClientContext") -> None:
         if ctx.slot_data is not None:
@@ -177,16 +258,13 @@ class ACClient(BizHawkClient):
 
             # Items received handling
 
-            # Check to see if the goal mission should be unlocked
-            add_goal_to_list: bool = False
-            if (sum(completed_missions_flags) >= ctx.slot_data[Constants.GAME_OPTIONS_KEY]["goal_requirement"]):
-                add_goal_to_list = True
-
             # Unlock missions based on what has been received
 
-            await self.update_mission_list_code(ctx, add_goal_to_list)
+            await self.update_mission_list_code(ctx)
 
-            
+            # Credits handling
+
+            await self.award_credits(ctx)
 
             # Local checked checks handling
 

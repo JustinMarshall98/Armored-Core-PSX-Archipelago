@@ -72,7 +72,7 @@ all_missions: typing.Tuple[Mission, ...] = (
 )
 
 STARTING_MISSION = all_missions[0]
-VICTORY_MISSION = all_missions[-2] # Destroy Floating Mines
+DESTROY_FLOATING_MINES = all_missions[-2]
 
 id_to_mission = {mission.id: mission for mission in all_missions}
 name_to_mission = {mission.name: mission for mission in all_missions}
