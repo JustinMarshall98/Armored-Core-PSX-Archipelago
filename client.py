@@ -273,6 +273,11 @@ class ACClient(BizHawkClient):
                 get_location_id_for_mission(key) for key, value in missions_to_completed.items() if value
             ])
 
+            # Award game completion if in missionsanity mode and you've reached the mission goal threshold
+            if ctx.slot_data[Constants.GAME_OPTIONS_KEY]["goal"] == 0: # Missionsanity
+                if completed_missions_flags.count(True) == ctx.slot_data[Constants.GAME_OPTIONS_KEY]["missionsanity_goal_requirement"]:
+                    new_local_check_locations.add(Constants.VICTORY_LOCATION_ID)
+
             if new_local_check_locations != self.local_checked_locations:
                 self.local_checked_locations = new_local_check_locations
                 if new_local_check_locations is not None:

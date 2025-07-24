@@ -11,7 +11,7 @@ class Constants:
     VICTORY_ITEM_NAME: str = "Armored Core Goal"
     VICTORY_LOCATION_NAME: str = "Armored Core Completed"
     VICTORY_ITEM_ID: int = 0x1
-    VICTORY_LOCAITON_ID: int = 0x1
+    VICTORY_LOCATION_ID: int = 0x1
     PROGRESSIVE_MISSION_ITEM_NAME: str = "Progressive Mission"
     PROGRESSIVE_MISSION_ITEM_ID: int = 0x2
     CREDIT_ITEM_NAME: str = "5000 Credits" # Hardcoded currently
