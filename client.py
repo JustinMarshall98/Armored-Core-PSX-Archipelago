@@ -140,14 +140,13 @@ class ACClient(BizHawkClient):
                 number_of_missions = 5 * (progressive_missions_received + 1)
             else:
                 number_of_missions = 46
-            for mission in all_missions:
-                if mission.progression_level <= (progressive_missions_received + 1) and mission.progression_level != 0:
-                    code_as_string += self.construct_new_mission_code_entry(mission.id, mission_counter, number_of_missions)
-                    mission_counter += 1
+            for i in range(1, progressive_missions_received + 2):
+                for mission in all_missions:
+                    if mission.progression_level == i:
+                        code_as_string += self.construct_new_mission_code_entry(mission.id, mission_counter, number_of_missions)
+                        mission_counter += 1
         code_as_string += "0000000000000324D43723A0891C020800000000"
-        from CommonClient import logger
         for i in range(0, len(code_as_string), 2):
-            #logger.info(code_as_string[i:i+2])
             code_as_hex.append(int(code_as_string[i:i+2], 16))
         # Write instead of guarded write based on ravens nest menu check
         await bizhawk.write(ctx.bizhawk_ctx, [(
@@ -158,9 +157,7 @@ class ACClient(BizHawkClient):
         
 
     def construct_new_mission_code_entry(self, mission_id: int, mission_counter: int, number_of_missions: int) -> str:
-        #from CommonClient import logger
         new_code_entry: str = ""
-        # The immediate value being written
         if (mission_counter < 16):
             new_code_entry += "0" + hex(mission_counter)[2:]
         else:
@@ -170,7 +167,6 @@ class ACClient(BizHawkClient):
         branch_amount = (number_of_missions - mission_counter) * 3
         if (branch_amount < 16):
             new_code_entry += "0" + hex(branch_amount)[2:]
-            #logger.info(hex(branch_amount))
         else:
             new_code_entry += hex(branch_amount)[2:]
         new_code_entry += "005010"
@@ -179,7 +175,6 @@ class ACClient(BizHawkClient):
         else:
             new_code_entry += hex(mission_id)[2:]
         new_code_entry += "000324"
-        #logger.info(new_code_entry)
         return new_code_entry
     
     async def set_mission_list_display_all(self, ctx: "BizHawkClientContext") -> None:
