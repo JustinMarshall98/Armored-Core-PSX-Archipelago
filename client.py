@@ -213,13 +213,13 @@ class ACClient(BizHawkClient):
             player_credit_bytes = (await bizhawk.read(
                 ctx.bizhawk_ctx, [(Constants.PLAYER_CREDITS_OFFSET, 4, MAIN_RAM)]
                 ))
-            player_credit: int = int.from_bytes(player_credit_bytes[0], "little")
+            player_credit: int = int.from_bytes(player_credit_bytes[0], "little", signed = True)
             logger.info(f"Player credits read as {player_credit}")
             p1, p2, p3, p4 = (player_credit & 0xFFFFFFFF).to_bytes(4, "little")
             player_credit = player_credit + ((received_credit_drops - stored_credit_drops) * 5000)
             c1, c2, c3, c4 = (player_credit & 0xFFFFFFFF).to_bytes(4, "little")
             logger.info(f"Attempting to award {(received_credit_drops - stored_credit_drops) * 5000}, new total should be {player_credit}")
-            logger.info(f"bytes {player_credit.to_bytes(4, "little")} and {player_credit_bytes} and {player_credit_bytes[0]} and {c1} {c2} {c3} {c4}")
+            logger.info(f"bytes {player_credit.to_bytes(4, "little", signed = True)} and {player_credit_bytes} and {player_credit_bytes[0]} and {c1} {c2} {c3} {c4}")
             # Guarded write based on read in credit amount. Stops things from messing up when the game is updating credit value
             award_success: bool = await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
                     Constants.PLAYER_CREDITS_OFFSET,
