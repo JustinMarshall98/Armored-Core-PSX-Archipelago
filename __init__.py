@@ -97,9 +97,17 @@ class ACWorld(World):
             for i in range(9): # Hardcoded number of Progressive Mission items currently
                 itempool.append(self.create_item(Constants.PROGRESSIVE_MISSION_ITEM_NAME))
 
-        # Generate filler (5000 Credit items currently)
+        # Generate filler
 
         filler_slots: int = len(mission_list_region.locations) - len(itempool)
+
+        # Human+ generates before credit filler if the option is on
+        if self.options.include_humanplus:
+            humanplus_slots: int = 3 if filler_slots > 3 else filler_slots
+            itempool += [self.create_item(Constants.PROGRESSIVE_HUMANPLUS_ITEM_NAME) for h in range(humanplus_slots)][:humanplus_slots]
+        
+        filler_slots = filler_slots - humanplus_slots
+        # Credit checks (5000)
         itempool += [self.create_item(Constants.CREDIT_ITEM_NAME) for c in range(filler_slots)][:filler_slots]
 
         # Set Goal item location

@@ -237,6 +237,45 @@ class ACClient(BizHawkClient):
                     MAIN_RAM
                 )])
     
+    async def award_humanplus(self, ctx: "BizHawkClientContext") -> None:
+        # We fail to award humanplus levels if we are not in the ravens nest menu at all
+        # Although it should be safe to do during missions as well...
+        in_menu: int = await self.ravens_nest_menu_check(ctx)
+        if in_menu == -1:
+            return
+        
+        # Read what human+ level we are at
+        # Progressive Human+ checks will overwrite Human+ progress from regular gameplay.
+        # This is probably fine
+        stored_humanplus_level: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.HUMANPLUS_LEVEL_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        
+        received_humanplus_drops: int = 0
+        for item in ctx.items_received:
+                if item.item == Constants.PROGRESSIVE_HUMANPLUS_ITEM_ID:
+                    received_humanplus_drops += 1
+        
+        new_humanplus_level: int
+        if received_humanplus_drops == 1:
+            new_humanplus_level = 0x1
+        elif received_humanplus_drops == 2:
+            new_humanplus_level = 0x4
+        else:
+            new_humanplus_level = 0x6
+        
+        if stored_humanplus_level < new_humanplus_level:
+            # Award new human+ level
+            await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.HUMANPLUS_LEVEL_OFFSET,
+                    [new_humanplus_level],
+                    MAIN_RAM
+                )],[(
+                    Constants.HUMANPLUS_LEVEL_OFFSET,
+                    [stored_humanplus_level],
+                    MAIN_RAM
+                )])
+    
     async def game_watcher(self, ctx: "BizHawkClientContext") -> None:
         if ctx.slot_data is not None:
 
@@ -260,6 +299,9 @@ class ACClient(BizHawkClient):
             # Credits handling
 
             await self.award_credits(ctx)
+
+            # Human+ handling
+            await self.award_humanplus(ctx)
 
             # Local checked checks handling
 

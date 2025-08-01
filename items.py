@@ -19,6 +19,8 @@ item_id_to_item_name[Constants.PROGRESSIVE_MISSION_ITEM_ID] = Constants.PROGRESS
 # Credit
 item_id_to_item_name[Constants.CREDIT_ITEM_ID] = Constants.CREDIT_ITEM_NAME
 
+# Progressive Human+
+item_id_to_item_name[Constants.PROGRESSIVE_HUMANPLUS_ITEM_ID] = Constants.PROGRESSIVE_HUMANPLUS_ITEM_NAME
 
 # Reverse item_id_to_item_name
 item_name_to_item_id: typing.Dict[str, int] = {value: key for key, value in item_id_to_item_name.items()}

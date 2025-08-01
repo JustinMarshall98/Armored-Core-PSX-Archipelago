@@ -30,10 +30,18 @@ class MissionsanityGoalRequirement(Range):
     range_end = 47
     default = 47
 
+class IncludeHumanPlusFiller(Toggle):
+    """
+    If this option is on, three "Progressive Human+"
+    Enhancement levels will be added as filler to the item pool.
+    """
+    display_name = "Include Human+ Filler"
+
 @dataclass
 class ACOptions(PerGameCommonOptions):
     goal: Goal
     missionsanity_goal_requirement: MissionsanityGoalRequirement
+    include_humanplus: IncludeHumanPlusFiller
 
     def serialize(self) -> typing.Dict[str, int]:
         return {field.name: getattr(self, field.name).value for field in dataclasses.fields(self)}
