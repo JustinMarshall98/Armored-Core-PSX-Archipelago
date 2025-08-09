@@ -22,13 +22,12 @@ class MissionsanityGoalRequirement(Range):
     """
     This option only matters if your Goal is Missionsanity.
     Select how many missions it takes to complete your goal.
-    Includes the tutorial mission.
-    (So if you set it to 1 and become a Raven, you will complete your goal)
+    Does not include the tutorial mission.
     """
     display_name = "Missionsanity Goal Requirement"
     range_start = 1
-    range_end = 47
-    default = 47
+    range_end = 46
+    default = 46
 
 class IncludeHumanPlusFiller(Toggle):
     """
