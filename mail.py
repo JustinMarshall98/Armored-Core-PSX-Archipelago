@@ -19,7 +19,7 @@ class Mail:
 all_mail: typing.Tuple[Mail, ...] = (
     Mail(0x0, "New Parts Added (1)", -1), # After doing 10 Missions
     Mail(0x1, "New Parts Added (2)", -1), # After doing 20 Missions
-    Mail(0x2, "Human Plus", -1), # After doing 13(?) Missions
+    Mail(0x2, "Human Plus", -1), # After doing 13 Missions
     Mail(0x3, "To All New Ravens", 0x0), # Raven Test
     Mail(0x4, "Reclaiming the Facility", 0x25), # Reclaim Oil Facility
     Mail(0x5, "Struggle", 0x25), # Reclaim Oil Facility

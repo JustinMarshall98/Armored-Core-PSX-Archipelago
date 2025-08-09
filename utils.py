@@ -21,7 +21,7 @@ class Constants:
     HUMANPLUS_LEVEL_OFFSET: int = 0x039D20 # Data is 1 byte size. The three levels are 01/04/06
     PROGRESSIVE_HUMANPLUS_ITEM_NAME: str = "Progressive Human+"
     PROGRESSIVE_HUMANPLUS_ITEM_ID: int = 0x4
-
+    MAIL_RECEPTION_OFFSET: int = 0x17F6D0 # Data is 1 Byte
 
 
     FREESPACE_CODE_OFFSET: int = 0x17f860 # Used for Mission List modification, it's actually where Mail names are stored lol (but we guarded write to prevent Mail from getting messed up)

@@ -9,8 +9,9 @@ from worlds._bizhawk.client import BizHawkClient
 
 from .version import __version__
 from .utils import Constants
-from .locations import get_location_id_for_mission, is_mission_location_id, mission_from_location_id
+from .locations import get_location_id_for_mission, is_mission_location_id, mission_from_location_id, get_location_id_for_mail
 from .mission import Mission, all_missions
+from .mail import Mail, all_mail
 
 if TYPE_CHECKING:
     from worlds._bizhawk.context import BizHawkClientContext
@@ -69,6 +70,28 @@ class ACClient(BizHawkClient):
             else:
                 mission_completed_flags.append(False)
         return mission_completed_flags
+    
+    async def read_mail_read_flags(self, ctx: "BizHawkClientContext") -> typing.List[bool]:
+        byte_list_mail: typing.List[bytes] = []
+        for mail_number in range(len(all_mail)):
+            # Don't read mail read flag for omitted mail
+            byte_list_mail.append((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.MAIL_RECEPTION_OFFSET + all_mail[mail_number].id, 1, MAIN_RAM)]
+            ))[0])
+        mail_read_flags: typing.List[bool] = []
+        # There must be a better way! Too tired to think of a better one atm
+        accepted_bytes: typing.List[bytes] = [0x3, 0x7, 0xb, 0xf,
+                                              0x13, 0x17, 0x1b, 0x1f, 
+                                              0x23, 0x27, 0x2b, 0x2f, 
+                                              0x33, 0x37, 0x3b, 0x3f,
+                                              0x43, 0x47, 0x4b, 0x4f,
+                                              0x53, 0x57, 0x5b]
+        for byte in byte_list_mail:
+            if byte in accepted_bytes:
+                mail_read_flags.append(True)
+            else:
+                mail_read_flags.append(False)
+        return mail_read_flags
     
     # return: 0-5 indicates what part of the ravens nest menu we are hovering / in. -1 means we are not in the ravens nest menu.
     async def ravens_nest_menu_check(self, ctx: "BizHawkClientContext") -> int:
@@ -289,6 +312,8 @@ class ACClient(BizHawkClient):
             # Read mission completion locations
             completed_missions_flags: typing.List[bool] = await self.read_mission_completion(ctx)
 
+            # Read mail read locations
+            read_mail_flags: typing.List[bool] = await self.read_mail_read_flags(ctx)
 
             # Items received handling
 
@@ -297,7 +322,6 @@ class ACClient(BizHawkClient):
             await self.update_mission_list_code(ctx)
 
             # Credits handling
-
             await self.award_credits(ctx)
 
             # Human+ handling
@@ -311,9 +335,17 @@ class ACClient(BizHawkClient):
                 m: c for m, c in zip(all_missions, completed_missions_flags)
             }
 
+            mail_been_read: typing.Dict[Mail, bool] = {
+                m: c for m, c in zip(all_mail, read_mail_flags)
+            }
+
             new_local_check_locations = set([
                 get_location_id_for_mission(key) for key, value in missions_to_completed.items() if value
             ])
+
+            new_local_check_locations = new_local_check_locations.union(set([
+                get_location_id_for_mail(key) for key, value in mail_been_read.items() if value
+            ]))
 
             # Award game completion if in missionsanity mode and you've reached the mission goal threshold
             if ctx.slot_data[Constants.GAME_OPTIONS_KEY]["goal"] == 0: # Missionsanity
