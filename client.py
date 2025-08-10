@@ -291,8 +291,10 @@ class ACClient(BizHawkClient):
             new_humanplus_level = 0x1
         elif received_humanplus_drops == 2:
             new_humanplus_level = 0x4
-        else:
+        elif received_humanplus_drops == 3:
             new_humanplus_level = 0x6
+        else:
+            new_humanplus_level = 0x0
         
         if stored_humanplus_level < new_humanplus_level:
             # Award new human+ level
