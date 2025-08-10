@@ -18,11 +18,11 @@ In Mission-Sanity mode each mission also has its own check, so you can be sent m
 
 ## Which items can be in another player's world?
 
-Missions and Progressive Missions depending on how you are playing, as well as Credit items for filler.
+Missions and Progressive Missions depending on how you are playing, as well as filler (Credits, Human+ Levels, etc).
 
 ## What does another world's item look like in Armored Core?
 
-You item acquisitions take the form of having completed a mission.
+You item acquisitions take the form of having completed a mission or reading mail.
 As such you'll have to check the BizHawk client to know the actual items that are unlocked from these locations.
 Note that mission completion isn't checked until you have re-entered the Raven's Nest menu.
 

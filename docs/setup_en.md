@@ -50,6 +50,6 @@ Reconnecting to the server after completing a mission will still send its check 
 ## Notes and Limitations
 
 1. As mentioned above, the mission menu restructuring code requires a connection to the client and a connection to the server.
-2. Credit and Mission checks are sent and received only in the Raven's Nest menu.
+2. Checks are sent and received only in the Raven's Nest menu.
 3. Missions that are not unlocked yet currently appear in the mission list as Dummy00.
 This mission is the Raven Test, you won't get anything for completing it again.
