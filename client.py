@@ -57,9 +57,9 @@ class ACClient(BizHawkClient):
         return True
     
     async def read_mission_completion(self, ctx: "BizHawkClientContext") -> typing.List[bool]:
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1:
-            return []
+        #in_menu: int = await self.ravens_nest_menu_check(ctx)
+        #if in_menu == -1:
+        #    return []
         byte_list_missions: typing.List[bytes] = []
         for mission_number in range(len(all_missions)):
             # Don't read mission completion for omitted missions
@@ -75,9 +75,9 @@ class ACClient(BizHawkClient):
         return mission_completed_flags
     
     async def read_mail_read_flags(self, ctx: "BizHawkClientContext") -> typing.List[bool]:
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1:
-            return []
+        #in_menu: int = await self.ravens_nest_menu_check(ctx)
+        #if in_menu == -1:
+        #    return []
         
         byte_list_mail: typing.List[bytes] = []
         for mail_number in range(len(all_mail)):
@@ -305,6 +305,22 @@ class ACClient(BizHawkClient):
                     [stored_humanplus_level],
                     MAIN_RAM
                 )])
+            
+    # Store the number of successfully completed missions into story progress (For certain Mail's to appear)
+    async def force_update_mission_count(self, ctx: "BizHawkClientContext") -> None:
+        in_menu: int = await self.ravens_nest_menu_check(ctx)
+        if in_menu == -1:
+            return []
+        completed_sorties_byte: typing.int = (await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.SUCCESSFUL_SORTIES_COUNT_OFFSET, 1, MAIN_RAM)]
+            ))[0]
+        await bizhawk.write(ctx.bizhawk_ctx, [(
+                    Constants.STORY_PROGRESS_OFFSET,
+                    [int.from_bytes(completed_sorties_byte)],
+                    MAIN_RAM
+                )])
+
+        
     
     async def game_watcher(self, ctx: "BizHawkClientContext") -> None:
         if ctx.slot_data is not None:
@@ -315,6 +331,9 @@ class ACClient(BizHawkClient):
                     "status": ClientStatus.CLIENT_GOAL
                 }])
                 ctx.finished_game = True
+
+            # Force update a value to properly count completed missions
+            await self.force_update_mission_count(ctx)
 
             # Read mission completion locations
             completed_missions_flags: typing.List[bool] = await self.read_mission_completion(ctx)
@@ -356,7 +375,7 @@ class ACClient(BizHawkClient):
 
             # Award game completion if in missionsanity mode and you've reached the mission goal threshold
             if ctx.slot_data[Constants.GAME_OPTIONS_KEY]["goal"] == 0: # Missionsanity
-                if completed_missions_flags.count(True) == ctx.slot_data[Constants.GAME_OPTIONS_KEY]["missionsanity_goal_requirement"]:
+                if completed_missions_flags.count(True) == ctx.slot_data[Constants.GAME_OPTIONS_KEY]["missionsanity_goal_requirement"] + 1:
                     new_local_check_locations.add(Constants.VICTORY_LOCATION_ID)
 
             if new_local_check_locations != self.local_checked_locations:
