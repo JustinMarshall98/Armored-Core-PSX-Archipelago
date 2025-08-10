@@ -99,15 +99,15 @@ class ACWorld(World):
             else: # It has a different unlock requirement. As of right now these can all be done Out Of Logic, but it leads to a better play pattern
                 if mail.name == "New Parts Added (1)": # Unlocks after 10 missions are completed, so the rule is you must have at least 10 missions (should it be 9? Raven Test?)
                     mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
-                    set_rule(mission_threshold_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 10))
+                    set_rule(mail_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 10))
                     mission_list_region.locations.append(mail_location)
                 elif mail.name == "New Parts Added (2)": # Unlocks after 20 missions are completed, so the rule is you must have at least 20 missions (should it be 19? Raven Test?)
                     mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
-                    set_rule(mission_threshold_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 20))
+                    set_rule(mail_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 20))
                     mission_list_region.locations.append(mail_location)
                 else: #mail.name == "Human Plus": # Unlocks after 13 missions are completed, so the rule is you must have at least 13 missions (should it be 12? Raven Test?)
                     mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
-                    set_rule(mission_threshold_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 13))
+                    set_rule(mail_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 13))
                     mission_list_region.locations.append(mail_location)
 
 

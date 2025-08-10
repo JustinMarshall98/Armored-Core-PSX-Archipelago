@@ -1,7 +1,7 @@
 import typing
 import dataclasses
 
-from Options import Range, Choice, PerGameCommonOptions, Toggle
+from Options import Range, Choice, PerGameCommonOptions, DefaultOnToggle
 from dataclasses import dataclass
 
 class Goal(Choice):
@@ -29,7 +29,7 @@ class MissionsanityGoalRequirement(Range):
     range_end = 46
     default = 46
 
-class IncludeHumanPlusFiller(Toggle):
+class IncludeHumanPlusFiller(DefaultOnToggle):
     """
     If this option is on, three "Progressive Human+"
     Enhancement levels will be added as filler to the item pool.
