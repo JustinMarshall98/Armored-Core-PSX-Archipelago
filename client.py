@@ -57,9 +57,9 @@ class ACClient(BizHawkClient):
         return True
     
     async def read_mission_completion(self, ctx: "BizHawkClientContext") -> typing.List[bool]:
-        #in_menu: int = await self.ravens_nest_menu_check(ctx)
-        #if in_menu == -1:
-        #    return []
+        in_menu: int = await self.ravens_nest_menu_check(ctx)
+        if in_menu == -1:
+            return []
         byte_list_missions: typing.List[bytes] = []
         for mission_number in range(len(all_missions)):
             # Don't read mission completion for omitted missions
@@ -75,9 +75,9 @@ class ACClient(BizHawkClient):
         return mission_completed_flags
     
     async def read_mail_read_flags(self, ctx: "BizHawkClientContext") -> typing.List[bool]:
-        #in_menu: int = await self.ravens_nest_menu_check(ctx)
-        #if in_menu == -1:
-        #    return []
+        in_menu: int = await self.ravens_nest_menu_check(ctx)
+        if in_menu == -1:
+            return []
         
         byte_list_mail: typing.List[bytes] = []
         for mail_number in range(len(all_mail)):
