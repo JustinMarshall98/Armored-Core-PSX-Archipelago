@@ -10,3 +10,6 @@ APworld being developed by myself and ArmoredKori. Available to download in the 
 
 Have suggestions or comments?
 You can interact with this repository here or reach the devs on the Archipelago discord.
+
+Special Thanks:
+Vartazian for ripping / doing data entry of Parts data
