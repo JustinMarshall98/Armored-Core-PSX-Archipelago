@@ -24,6 +24,8 @@ class Constants:
     MAIL_RECEPTION_OFFSET: int = 0x17F6D0 # Data is 1 Byte
     STORY_PROGRESS_OFFSET: int = 0x1F3752 # Data is 1 Byte
     SUCCESSFUL_SORTIES_COUNT_OFFSET: int = 0x1F3780 # Data is 1 Byte
+    SHOP_INVENTORY_OFFSET: int = 0x031B34 # Data is 1 Byte
+    PARTS_INVENTORY_OFFSET: int = 0x031A94 # Data is 1 Byte
 
 
     FREESPACE_CODE_OFFSET: int = 0x17f860 # Used for Mission List modification, it's actually where Mail names are stored lol (but we guarded write to prevent Mail from getting messed up)

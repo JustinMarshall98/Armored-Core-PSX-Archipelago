@@ -3,6 +3,7 @@ import typing
 from BaseClasses import Item, ItemClassification
 from .utils import Constants
 from .mission import all_missions, name_to_mission
+from .parts import all_parts, name_to_part
 
 item_id_to_item_name: typing.Dict[int, str] = {}
 
@@ -21,6 +22,11 @@ item_id_to_item_name[Constants.CREDIT_ITEM_ID] = Constants.CREDIT_ITEM_NAME
 
 # Progressive Human+
 item_id_to_item_name[Constants.PROGRESSIVE_HUMANPLUS_ITEM_ID] = Constants.PROGRESSIVE_HUMANPLUS_ITEM_NAME
+
+# Parts
+for part in all_parts:
+    if part.name != "DUMMY" and part.name != "NO WEAPON":
+        item_id_to_item_name[part.id + Constants.PARTS_INVENTORY_OFFSET] = part.name #f"{part}"
 
 # Reverse item_id_to_item_name
 item_name_to_item_id: typing.Dict[str, int] = {value: key for key, value in item_id_to_item_name.items()}

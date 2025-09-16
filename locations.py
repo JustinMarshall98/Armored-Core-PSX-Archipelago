@@ -4,6 +4,7 @@ from BaseClasses import Location, Region, LocationProgressType, Item
 from .mission import Mission, all_missions, id_to_mission
 from .utils import Constants
 from .mail import Mail, all_mail, id_to_mail
+from .parts import Part, all_parts
 
 def get_location_name_for_mission(mission: Mission) -> str:
     return f"{mission.name} Completed"
@@ -29,6 +30,16 @@ def get_location_id_for_mail_id(mail_id: int) -> int:
 
 def get_location_id_for_mail(mail: Mail) -> int:
     return get_location_id_for_mail_id(mail.id)
+
+
+def get_location_name_for_shop_listing(part: Part) -> str:
+    return f"Shop - {part.name}"
+
+def get_location_id_for_shop_listing_id(part_id: int) -> int:
+    return Constants.SHOP_INVENTORY_OFFSET + part_id
+
+def get_location_id_for_shop_listing(part: Part) -> int:
+    return get_location_id_for_shop_listing_id(part.id)
 
 
 class ACLocation(Location):
@@ -69,4 +80,15 @@ mail_location_name_to_id: typing.Dict[str, int] = {}
 for mail in all_mail:
     mail_location_name_to_id[get_location_name_for_mail(mail)] = get_location_id_for_mail(mail)
 
-location_name_to_id: typing.Dict[str, int] = {**mission_location_name_to_id, **mail_location_name_to_id}
+class ShopLocation(ACLocation):
+    # Location for purchasing something from the Shop (the shop listing based on a given part)
+    part: Part
+    def __init__(self, region: Region, player: int, part: Part):
+        super().__init__(region, player, get_location_name_for_shop_listing(part), get_location_id_for_shop_listing(part))
+        self.part = part
+
+shop_listing_location_name_to_id: typing.Dict[str, int] = {}
+for part in all_parts:
+    shop_listing_location_name_to_id[get_location_name_for_shop_listing(part)] = get_location_id_for_shop_listing(part)
+
+location_name_to_id: typing.Dict[str, int] = {**mission_location_name_to_id, **mail_location_name_to_id, **shop_listing_location_name_to_id}

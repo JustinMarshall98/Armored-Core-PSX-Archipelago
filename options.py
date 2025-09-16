@@ -1,7 +1,7 @@
 import typing
 import dataclasses
 
-from Options import Range, Choice, PerGameCommonOptions, DefaultOnToggle
+from Options import Range, Choice, PerGameCommonOptions, DefaultOnToggle, Toggle as DefaultOffToggle
 from dataclasses import dataclass
 
 class Goal(Choice):
@@ -36,11 +36,43 @@ class IncludeHumanPlusFiller(DefaultOnToggle):
     """
     display_name = "Include Human+ Filler"
 
+class Shopsanity(DefaultOffToggle):
+    """
+    Shopsanity turns all parts listings in the shop into locations,
+    and all parts that you don't start with are shuffled into the multiworld.
+    """
+    display_name = "Shopsanity"
+
+class ShopsanityListingsPerMission(Range):
+    """
+    Define how many shop listings open up per mission completion.
+    Higher numbers may require more grinding. Includes Raven Test.
+    Lowering the number of locations in your game can cause the
+    number of parts and other filler generated in the multiworld
+    to go down, meaning you may have runs without eventual access to all parts.
+    """
+    display_name = "Shopsanity Listings Per Mission"
+    range_start = 0
+    range_end = 138
+    default = 4
+
+class CreditCheckAmount(Range):
+    """
+    Define how much you earn from Credit Filler checks you receieve.
+    """
+    display_name = "Credit Check Amount"
+    range_start = 1
+    range_end = 1000000
+    default = 5000
+
 @dataclass
 class ACOptions(PerGameCommonOptions):
     goal: Goal
     missionsanity_goal_requirement: MissionsanityGoalRequirement
     include_humanplus: IncludeHumanPlusFiller
+    shopsanity: Shopsanity
+    shopsanity_listings_per_mission: ShopsanityListingsPerMission
+    credit_check_amount: CreditCheckAmount
 
     def serialize(self) -> typing.Dict[str, int]:
         return {field.name: getattr(self, field.name).value for field in dataclasses.fields(self)}
