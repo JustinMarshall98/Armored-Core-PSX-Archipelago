@@ -9,9 +9,10 @@ from worlds._bizhawk.client import BizHawkClient
 
 from .version import __version__
 from .utils import Constants
-from .locations import get_location_id_for_mission, is_mission_location_id, mission_from_location_id, get_location_id_for_mail
+from .locations import get_location_id_for_mission, is_mission_location_id, mission_from_location_id, get_location_id_for_mail, get_location_id_for_shop_listing
 from .mission import Mission, all_missions
 from .mail import Mail, all_mail
+from .parts import Part, all_parts
 
 if TYPE_CHECKING:
     from worlds._bizhawk.context import BizHawkClientContext
@@ -55,6 +56,35 @@ class ACClient(BizHawkClient):
         logger.info(f"Armored Core 1 Client v{__version__}.")
         # Add updates section to logger info
         return True
+    
+    async def shopsanity_initialization(self, ctx: "BizHawkClientContext") -> None:
+        in_menu: int = await self.ravens_nest_menu_check(ctx)
+        if in_menu == -1 or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
+            return []
+        shop_listings: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.SHOPSANITY_TRACKING_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        if shop_listings == 0: # The run has just begun, set listings to 1 and remove everything from the shop
+            shop_listings = 1
+            new_shop_contents: str = "00" * 146
+            shop_contents_hex: typing.List[int] = []
+            for i in range(0, len(new_shop_contents), 2):
+                shop_contents_hex.append(int(new_shop_contents[i:i+2], 16))
+            # Write instead of guarded write based on ravens nest menu check
+            await bizhawk.write(ctx.bizhawk_ctx, [(
+                        Constants.SHOP_INVENTORY_OFFSET,
+                        shop_contents_hex,
+                        MAIN_RAM
+                    )])
+            # Write shop listings so this won't happen again
+            await bizhawk.write(ctx.bizhawk_ctx, [(
+                        Constants.SHOPSANITY_TRACKING_OFFSET,
+                        shop_listings,
+                        MAIN_RAM
+                    )])
+
+
+        
     
     async def read_mission_completion(self, ctx: "BizHawkClientContext") -> typing.List[bool]:
         in_menu: int = await self.ravens_nest_menu_check(ctx)
@@ -308,6 +338,51 @@ class ACClient(BizHawkClient):
                     MAIN_RAM
                 )])
             
+    async def award_shop_listings(self, ctx: "BizHawkClientContext", mission_completion_count) -> None:
+        # Don't bother if Shopsanity is not on
+        # shop listings are based on the number of completed missions
+        # shop listings are immediately scouted when the player earns them
+
+        in_menu: int = await self.ravens_nest_menu_check(ctx)
+        if in_menu == -1:
+            return []
+        
+        shop_listings: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.SHOPSANITY_TRACKING_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        
+        # Because shop_listings starts at 1 and not 0, offset this by -1
+        shop_listings -= 1
+
+        shop_listings_unlock_order: list[Part] = list(all_parts)
+
+        if mission_completion_count > shop_listings: # We have listings to award the player
+            for i in range(shop_listings, mission_completion_count):
+                start_index: int = i * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]
+                end_index: int = (((i + 1) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]) if ((i + 1) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]) < len(shop_listings_unlock_order) 
+                                                                                            else len(shop_listings_unlock_order) - 1)
+                for part in shop_listings_unlock_order[start_index : end_index]:
+                    # Put one in the store inventory
+                    await bizhawk.write(ctx.bizhawk_ctx, [(
+                        Constants.SHOP_INVENTORY_OFFSET + part.id,
+                        [0x01],
+                        MAIN_RAM
+                    )])
+                    # Scout the location (a free hint for the player so they can easily tell what is in the shop)
+                    await ctx.send_msgs([{
+                        "cmd": "LocationScouts",
+                        "locations": [
+                            get_location_id_for_shop_listing(part)
+                        ],
+                        "create_as_hint": 2
+                    }])
+            # Now write mission_completion_count + 1 to shop listings
+            await bizhawk.write(ctx.bizhawk_ctx, [(
+                Constants.SHOPSANITY_TRACKING_OFFSET,
+                [mission_completion_count + 1],
+                MAIN_RAM
+            )])
+            
     # Store the number of successfully completed missions into story progress (For certain Mail's to appear)
     async def force_update_mission_count(self, ctx: "BizHawkClientContext") -> None:
         in_menu: int = await self.ravens_nest_menu_check(ctx)
@@ -334,6 +409,9 @@ class ACClient(BizHawkClient):
                 }])
                 ctx.finished_game = True
 
+            # Blanks the entire shop at the start of the run so it can be properly updated (if shopsanity is on)
+            await self.shopsanity_initialization(ctx)
+
             # Force update a value to properly count completed missions
             await self.force_update_mission_count(ctx)
 
@@ -346,7 +424,6 @@ class ACClient(BizHawkClient):
             # Items received handling
 
             # Unlock missions based on what has been received
-
             await self.update_mission_list_code(ctx)
 
             # Credits handling
@@ -354,6 +431,9 @@ class ACClient(BizHawkClient):
 
             # Human+ handling
             await self.award_humanplus(ctx)
+
+            # Shopsanity handling
+            await self.award_shop_listings(ctx, completed_missions_flags.count(True))
 
             # Local checked checks handling
 

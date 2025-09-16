@@ -17,6 +17,7 @@ class Constants:
     CREDIT_ITEM_NAME: str = "5000 Credits" # Hardcoded currently
     CREDIT_ITEM_ID: int = 0x3
     CREDIT_ITEMS_RECEIVED_OFFSET: int = 0x48664 # We are commandeering the VS Time Limit option memory for this! Sticks in save file
+    SHOPSANITY_TRACKING_OFFSET: int = 0x48663 # We are comandeering the VS Stage option memory for this!
     PLAYER_CREDITS_OFFSET: int = 0x39CA4 # Data is 4 byte size, signed integer. Min max should be +/- 99,999,999.
     HUMANPLUS_LEVEL_OFFSET: int = 0x039D20 # Data is 1 byte size. The three levels are 01/04/06
     PROGRESSIVE_HUMANPLUS_ITEM_NAME: str = "Progressive Human+"

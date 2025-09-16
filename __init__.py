@@ -76,7 +76,7 @@ class ACWorld(World):
         if self.options.goal == 1: # Progressive Missions
             self.mission_unlock_order.sort(key = lambda m: m.progression_level)
         self.shop_listing_unlock_order = list(all_parts)
-        random.shuffle(self.shop_listing_unlock_order)
+        # random.shuffle(self.shop_listing_unlock_order) Don't randomize! Need to know what order this will be in
         self.randomized_valid_parts_rewards = list((set(all_parts) - set(all_dummy_parts)) - set(base_starting_parts))
         random.shuffle(self.randomized_valid_parts_rewards)
         self.missions_awarding_credits = list(missions_that_award_credits)
@@ -132,7 +132,6 @@ class ACWorld(World):
                     mission_list_region.locations.append(mail_location)
 
         # Define Shop Listings locations
-        print([m.name for m in missions_that_award_credits])
         for count, mission in enumerate(self.mission_unlock_order):
             start_index: int = count * self.options.shopsanity_listings_per_mission
             end_index: int = (((count + 1) * self.options.shopsanity_listings_per_mission) if ((count + 1) * self.options.shopsanity_listings_per_mission) < len(self.shop_listing_unlock_order) 

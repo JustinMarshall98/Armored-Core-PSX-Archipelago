@@ -52,7 +52,7 @@ class ShopsanityListingsPerMission(Range):
     to go down, meaning you may have runs without eventual access to all parts.
     """
     display_name = "Shopsanity Listings Per Mission"
-    range_start = 0
+    range_start = 1
     range_end = 138
     default = 4
 
