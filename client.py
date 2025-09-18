@@ -12,7 +12,7 @@ from .utils import Constants
 from .locations import get_location_id_for_mission, is_mission_location_id, mission_from_location_id, get_location_id_for_mail, get_location_id_for_shop_listing
 from .mission import Mission, all_missions
 from .mail import Mail, all_mail
-from .parts import Part, all_parts
+from .parts import Part, all_parts, id_to_part
 
 if TYPE_CHECKING:
     from worlds._bizhawk.context import BizHawkClientContext
@@ -344,7 +344,7 @@ class ACClient(BizHawkClient):
         # shop listings are immediately scouted when the player earns them
 
         in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1:
+        if in_menu == -1 or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
             return []
         
         shop_listings: int = int.from_bytes((await bizhawk.read(
@@ -382,7 +382,85 @@ class ACClient(BizHawkClient):
                 [mission_completion_count + 1],
                 MAIN_RAM
             )])
+
+    async def award_parts(self, ctx: "BizHawkClientContext") -> None:
+        # No menu check required, it's always loaded in memory
+
+        # Shopsanity check
+        if ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
+            return []
+
+        inventory_bytes = list((await bizhawk.read(
+                ctx.bizhawk_ctx, [(Constants.PARTS_INVENTORY_OFFSET, 146, MAIN_RAM)]
+                ))[0])
+        inventory_copy = list(inventory_bytes)
+        for item in ctx.items_received:
+            partID: int = item.item - Constants.PARTS_INVENTORY_OFFSET # Converts from ap itemID back to part id when subtracting
+            if partID in id_to_part: 
+                if inventory_bytes[partID] == 0x00:
+                    inventory_bytes[partID] = 0x02 # Give 2 of those parts
+
+        # If no new parts have been given, don't perform the gaurded write
+        if inventory_bytes == inventory_copy:
+            return []
+
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.PARTS_INVENTORY_OFFSET,
+                    inventory_bytes,
+                    MAIN_RAM
+                )],[(
+                    Constants.PARTS_INVENTORY_OFFSET,
+                    inventory_copy,
+                    MAIN_RAM
+                )])
             
+    # Checks shop listings received vs that listing still being available for purchase
+    # Also removes the part that was just purchased from the players inventory
+    async def check_purchased_items(self, ctx: "BizHawkClientContext", mission_completion_count) -> typing.Dict[Part, bool]:
+        in_menu: int = await self.ravens_nest_menu_check(ctx)
+        if in_menu == -1 or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
+            return {}
+        
+        shop_listings_unlock_order: list[Part] = list(all_parts)
+        purchased_items: typing.Dict[Part, bool] = {}
+        # There are 146 entries
+        purchased_bytes = (await bizhawk.read(
+                ctx.bizhawk_ctx, [(Constants.SHOP_INVENTORY_OFFSET, 146, MAIN_RAM)]
+                ))[0]
+        inventory_bytes = list((await bizhawk.read(
+                ctx.bizhawk_ctx, [(Constants.PARTS_INVENTORY_OFFSET, 146, MAIN_RAM)]
+                ))[0])
+        inventory_copy = list(inventory_bytes)
+
+        
+        if mission_completion_count > 0:
+            start_index: int = 0
+            end_index: int = (((mission_completion_count) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]) if ((mission_completion_count) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]) < len(purchased_bytes) 
+                                                                                                                    else len(purchased_bytes) - 1)
+            for count, byte in enumerate(purchased_bytes[start_index : end_index]):
+                #print(int.from_bytes(byte, "little", signed = True))
+                if byte == 0x00:
+                    # The player has had a shop listing given and then purchased that item
+                    purchased_items[shop_listings_unlock_order[count]] = True
+                    # It will be 01 if they have just made the purchase but don't have that part in their inventory
+                    if inventory_bytes[count] == 0x01:
+                        inventory_bytes[count] = 0x00
+                    # If they've purchased the item but they've already received that part, it doesn't matter if more are given to them
+
+        # Inequality signifies that the inventory needs updating
+        if inventory_bytes != inventory_copy:
+            await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.PARTS_INVENTORY_OFFSET,
+                    inventory_bytes,
+                    MAIN_RAM
+                )],[(
+                    Constants.PARTS_INVENTORY_OFFSET,
+                    inventory_copy,
+                    MAIN_RAM
+                )])
+        
+        return purchased_items
+
     # Store the number of successfully completed missions into story progress (For certain Mail's to appear)
     async def force_update_mission_count(self, ctx: "BizHawkClientContext") -> None:
         in_menu: int = await self.ravens_nest_menu_check(ctx)
@@ -435,6 +513,9 @@ class ACClient(BizHawkClient):
             # Shopsanity handling
             await self.award_shop_listings(ctx, completed_missions_flags.count(True))
 
+            # Parts handling
+            await self.award_parts(ctx)
+
             # Local checked checks handling
 
             new_local_check_locations: typing.Set[int]
@@ -447,12 +528,18 @@ class ACClient(BizHawkClient):
                 m: c for m, c in zip(all_mail, read_mail_flags)
             }
 
+            items_purchased: typing.Dict[Part, bool] = await self.check_purchased_items(ctx, completed_missions_flags.count(True))
+
             new_local_check_locations = set([
                 get_location_id_for_mission(key) for key, value in missions_to_completed.items() if value
             ])
 
             new_local_check_locations = new_local_check_locations.union(set([
                 get_location_id_for_mail(key) for key, value in mail_been_read.items() if value
+            ]))
+
+            new_local_check_locations = new_local_check_locations.union(set([
+                get_location_id_for_shop_listing(key) for key, value in items_purchased.items()
             ]))
 
             # Award game completion if in missionsanity mode and you've reached the mission goal threshold
