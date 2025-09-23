@@ -57,9 +57,8 @@ class ACClient(BizHawkClient):
         # Add updates section to logger info
         return True
     
-    async def shopsanity_initialization(self, ctx: "BizHawkClientContext") -> None:
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1 or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
+    async def shopsanity_initialization(self, ctx: "BizHawkClientContext", in_menu) -> None:
+        if not in_menu or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
             return []
         shop_listings: int = int.from_bytes((await bizhawk.read(
             ctx.bizhawk_ctx, [(Constants.SHOPSANITY_TRACKING_OFFSET, 1, MAIN_RAM)]
@@ -86,9 +85,8 @@ class ACClient(BizHawkClient):
 
         
     
-    async def read_mission_completion(self, ctx: "BizHawkClientContext") -> typing.List[bool]:
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1:
+    async def read_mission_completion(self, ctx: "BizHawkClientContext", in_menu) -> typing.List[bool]:
+        if not in_menu:
             return []
         byte_list_missions: typing.List[bytes] = []
         for mission_number in range(len(all_missions)):
@@ -104,9 +102,8 @@ class ACClient(BizHawkClient):
                 mission_completed_flags.append(False)
         return mission_completed_flags
     
-    async def read_mail_read_flags(self, ctx: "BizHawkClientContext") -> typing.List[bool]:
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1:
+    async def read_mail_read_flags(self, ctx: "BizHawkClientContext", in_menu) -> typing.List[bool]:
+        if not in_menu:
             return []
         
         byte_list_mail: typing.List[bytes] = []
@@ -130,9 +127,24 @@ class ACClient(BizHawkClient):
                 mail_read_flags.append(False)
         return mail_read_flags
     
+    # return: True/False if it detects we are in the Ravens Nest Menu
+    async def ravens_nest_menu_check(self, ctx: "BizHawkClientContext") -> bool:
+        MENU_LOADED_BYTES: bytes = bytes([0xC0, 0xDC, 0x04, 0x80])
+        menu_verification: bytes = (await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.MENU_LOADED_VERIFY_OFFSET1, 4, MAIN_RAM)]
+            ))[0]
+        if menu_verification == MENU_LOADED_BYTES:
+            return True
+        else:
+            menu_verification = int.from_bytes((await bizhawk.read(
+                ctx.bizhawk_ctx, [(Constants.MENU_LOADED_VERIFY_OFFSET2, 4, MAIN_RAM)]
+                ))[0])
+            if menu_verification == MENU_LOADED_BYTES:
+                return True
+            return False
+
     # return: 0-5 indicates what part of the ravens nest menu we are hovering / in. -1 means we are not in the ravens nest menu.
-    async def ravens_nest_menu_check(self, ctx: "BizHawkClientContext") -> int:
-        # Not using guarded_write because it can't check for more than one possible result. I think this leads to less overall read operations
+    async def ravens_nest_menu_section_check(self, ctx: "BizHawkClientContext") -> int:
         menu_verification: int = int.from_bytes((await bizhawk.read(
             ctx.bizhawk_ctx, [(Constants.MENU_CURRENT_SELECTION1_VERIFY_OFFSET, 1, MAIN_RAM)]
             ))[0])
@@ -151,14 +163,23 @@ class ACClient(BizHawkClient):
             else:
                 return -1
     
-    async def update_mission_list_code(self, ctx: "BizHawkClientContext") -> None:
+    async def update_mission_list_code(self, ctx: "BizHawkClientContext", menu_section) -> None:
         # Mission list code needs to be updated on the fly by the client
-        # ravens_nest_menu_check confirms we are in ravens nest menu at the time of writing (specifically missions section)
-        # Otherwise don't run this at all
 
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu != 2:
+        if menu_section != 2:
             return
+        
+        # Lock / Unlock if the mission menu is about to be loaded and the Mail data hasn't been overwritten with mission data
+        # I hate fighting race conditions (need to find other free space)
+
+        code_written_check: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.FREESPACE_CODE_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        locked: bool = False
+        
+        if code_written_check != 0x1F:
+            await bizhawk.lock(ctx.bizhawk_ctx)
+            locked = True
 
         await self.set_mission_list_display_all(ctx)
 
@@ -215,6 +236,9 @@ class ACClient(BizHawkClient):
                     MAIN_RAM
                 )])
         
+        if locked:
+            await bizhawk.unlock(ctx.bizhawk_ctx)
+        
 
     def construct_new_mission_code_entry(self, mission_id: int, mission_counter: int, number_of_missions: int) -> str:
         new_code_entry: str = ""
@@ -250,10 +274,9 @@ class ACClient(BizHawkClient):
                     MAIN_RAM
                 )])
         
-    async def award_credits(self, ctx: "BizHawkClientContext") -> None:
+    async def award_credits(self, ctx: "BizHawkClientContext", in_menu) -> None:
         # We fail to award credits if we are not in the ravens nest menu at all
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1:
+        if not in_menu:
             return
         
         # Read how many credit items have been received
@@ -297,11 +320,10 @@ class ACClient(BizHawkClient):
                     MAIN_RAM
                 )])
     
-    async def award_humanplus(self, ctx: "BizHawkClientContext") -> None:
+    async def award_humanplus(self, ctx: "BizHawkClientContext", in_menu) -> None:
         # We fail to award humanplus levels if we are not in the ravens nest menu at all
         # Although it should be safe to do during missions as well...
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1:
+        if not in_menu:
             return
         
         # Read what human+ level we are at
@@ -338,13 +360,12 @@ class ACClient(BizHawkClient):
                     MAIN_RAM
                 )])
             
-    async def award_shop_listings(self, ctx: "BizHawkClientContext", mission_completion_count) -> None:
+    async def award_shop_listings(self, ctx: "BizHawkClientContext", mission_completion_count, in_menu) -> None:
         # Don't bother if Shopsanity is not on
         # shop listings are based on the number of completed missions
         # shop listings are immediately scouted when the player earns them
 
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1 or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
+        if not in_menu or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
             return []
         
         shop_listings: int = int.from_bytes((await bizhawk.read(
@@ -416,9 +437,8 @@ class ACClient(BizHawkClient):
             
     # Checks shop listings received vs that listing still being available for purchase
     # Also removes the part that was just purchased from the players inventory
-    async def check_purchased_items(self, ctx: "BizHawkClientContext", mission_completion_count) -> typing.Dict[Part, bool]:
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1 or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
+    async def check_purchased_items(self, ctx: "BizHawkClientContext", mission_completion_count, in_menu) -> typing.Dict[Part, bool]:
+        if not in_menu or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
             return {}
         
         shop_listings_unlock_order: list[Part] = list(all_parts)
@@ -462,9 +482,8 @@ class ACClient(BizHawkClient):
         return purchased_items
 
     # Store the number of successfully completed missions into story progress (For certain Mail's to appear)
-    async def force_update_mission_count(self, ctx: "BizHawkClientContext") -> None:
-        in_menu: int = await self.ravens_nest_menu_check(ctx)
-        if in_menu == -1:
+    async def force_update_mission_count(self, ctx: "BizHawkClientContext", in_menu) -> None:
+        if not in_menu:
             return []
         completed_sorties_byte: typing.int = (await bizhawk.read(
             ctx.bizhawk_ctx, [(Constants.SUCCESSFUL_SORTIES_COUNT_OFFSET, 1, MAIN_RAM)]
@@ -487,31 +506,38 @@ class ACClient(BizHawkClient):
                 }])
                 ctx.finished_game = True
 
+            # Find out if we are in the Ravens Nest Menu
+            # Timing matters less on this than it does for the menu_section_check 
+            # (which is right before the function that needs it)
+            in_menu: bool = await self.ravens_nest_menu_check(ctx)
+
             # Blanks the entire shop at the start of the run so it can be properly updated (if shopsanity is on)
-            await self.shopsanity_initialization(ctx)
+            await self.shopsanity_initialization(ctx, in_menu)
 
             # Force update a value to properly count completed missions
-            await self.force_update_mission_count(ctx)
+            await self.force_update_mission_count(ctx, in_menu)
 
             # Read mission completion locations
-            completed_missions_flags: typing.List[bool] = await self.read_mission_completion(ctx)
+            completed_missions_flags: typing.List[bool] = await self.read_mission_completion(ctx, in_menu)
 
             # Read mail read locations
-            read_mail_flags: typing.List[bool] = await self.read_mail_read_flags(ctx)
+            read_mail_flags: typing.List[bool] = await self.read_mail_read_flags(ctx, in_menu)
 
             # Items received handling
 
+            # Find out what ravens nest menu section we're in
+            menu_section: int = await self.ravens_nest_menu_section_check(ctx)
             # Unlock missions based on what has been received
-            await self.update_mission_list_code(ctx)
+            await self.update_mission_list_code(ctx, menu_section)
 
             # Credits handling
-            await self.award_credits(ctx)
+            await self.award_credits(ctx, in_menu)
 
             # Human+ handling
-            await self.award_humanplus(ctx)
+            await self.award_humanplus(ctx, in_menu)
 
             # Shopsanity handling
-            await self.award_shop_listings(ctx, completed_missions_flags.count(True))
+            await self.award_shop_listings(ctx, completed_missions_flags.count(True), in_menu)
 
             # Parts handling
             await self.award_parts(ctx)
@@ -528,7 +554,7 @@ class ACClient(BizHawkClient):
                 m: c for m, c in zip(all_mail, read_mail_flags)
             }
 
-            items_purchased: typing.Dict[Part, bool] = await self.check_purchased_items(ctx, completed_missions_flags.count(True))
+            items_purchased: typing.Dict[Part, bool] = await self.check_purchased_items(ctx, completed_missions_flags.count(True), in_menu)
 
             new_local_check_locations = set([
                 get_location_id_for_mission(key) for key, value in missions_to_completed.items() if value

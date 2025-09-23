@@ -35,6 +35,8 @@ class Constants:
     MENU_CURRENT_SELECTION1_VERIFY_OFFSET: int = 0x1A2837 # 20 or E0 to verify we can use the above offset
     MENU_CURRENT_SELECTION2_OFFSET: int = 0x1A2766 # This data moves around, this is the second possible location for it (plus its verifier)
     MENU_CURRENT_SELECTION2_VERIFY_OFFSET: int = 0x1A2767
+    MENU_LOADED_VERIFY_OFFSET1: int = 0x1A2728
+    MENU_LOADED_VERIFY_OFFSET2: int = 0x1A27F8
     
 
     GAME_OPTIONS_KEY: str = "g"
