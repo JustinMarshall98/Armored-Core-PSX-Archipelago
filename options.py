@@ -47,13 +47,10 @@ class ShopsanityListingsPerMission(Range):
     """
     Define how many shop listings open up per mission completion.
     Higher numbers may require more grinding. Includes Raven Test.
-    Lowering the number of locations in your game can cause the
-    number of parts and other filler generated in the multiworld
-    to go down, meaning you may have runs without eventual access to all parts.
     """
     display_name = "Shopsanity Listings Per Mission"
-    range_start = 1
-    range_end = 138
+    range_start = 4
+    range_end = 146
     default = 4
 
 class CreditCheckAmount(Range):

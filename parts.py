@@ -488,11 +488,12 @@ all_arm_weapon_ls: typing.Tuple[Arm_Weapon_L, ...] = (
 )
 
 
-all_parts: typing.Tuple[Part, ...] = all_heads + all_cores + all_legs + all_arms + all_arm_weapon_rs + all_back_weapons + all_arm_weapon_ls + all_boosters + all_fcs + all_generators + all_options_parts  
+all_parts: typing.Tuple[Part, ...] = all_heads + all_cores + all_legs + all_arms + all_arm_weapon_rs + all_back_weapons + all_arm_weapon_ls + all_boosters + all_fcs + all_generators + all_options_parts
+all_parts_data_order: typing.Tuple[Part, ...] = all_heads + all_cores + all_arms + all_legs + all_generators + all_fcs + all_options_parts + all_boosters + all_back_weapons + all_arm_weapon_rs + all_arm_weapon_ls 
 
-all_dummy_parts: typing.Tuple[Part, ...] = (part for part in all_parts if part.name == "DUMMY" or part.name == "NO WEAPON")
+all_dummy_parts: typing.Tuple[Part, ...] = {part for part in all_parts if "DUMMY" in part.name or part.name == "NO WEAPON"}
 
-base_starting_parts: typing.Tuple[Part, ...] = (part for part in all_parts if 
+base_starting_parts: typing.Tuple[Part, ...] = {part for part in all_parts if 
                                                 part.name == "HD-GRY-NX" or
                                                 part.name == "XCA-00" or
                                                 part.name == "AN-201" or
@@ -503,7 +504,7 @@ base_starting_parts: typing.Tuple[Part, ...] = (part for part in all_parts if
                                                 part.name == "WM-S40/1" or
                                                 part.name == "RXA-01WE" or
                                                 part.name == "WG-RF35" or
-                                                part.name == "LS-2001")
+                                                part.name == "LS-2001"}
 
 id_to_part = {part.id: part for part in all_parts}
 name_to_part = {part.name: part for part in all_parts}

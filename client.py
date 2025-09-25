@@ -13,7 +13,7 @@ from .utils import Constants
 from .locations import get_location_id_for_mission, is_mission_location_id, mission_from_location_id, get_location_id_for_mail, get_location_id_for_shop_listing
 from .mission import Mission, all_missions
 from .mail import Mail, all_mail
-from .parts import Part, all_parts, id_to_part
+from .parts import Part, all_parts, id_to_part, all_parts_data_order, base_starting_parts
 
 if TYPE_CHECKING:
     from worlds._bizhawk.context import BizHawkClientContext
@@ -82,14 +82,6 @@ class ACClient(BizHawkClient):
                         shop_listings,
                         MAIN_RAM
                     )])
-            # Scout location data for shop text updating purposes!
-            parts_locations_to_scout: typing.List[int] = [get_location_id_for_shop_listing(part) for part in all_parts]
-            await ctx.send_msgs([{
-                "cmd": "LocationScouts",
-                "locations": parts_locations_to_scout,
-                "create_as_hint": 0
-            }])
-            print("Confirmed parts locations")
 
 
         
@@ -384,7 +376,7 @@ class ACClient(BizHawkClient):
         # Because shop_listings starts at 1 and not 0, offset this by -1
         shop_listings -= 1
 
-        shop_listings_unlock_order: list[Part] = list(all_parts)
+        shop_listings_unlock_order: list[Part] = list(all_parts_data_order)
 
         if mission_completion_count > shop_listings: # We have listings to award the player
             for i in range(shop_listings, mission_completion_count):
@@ -450,7 +442,7 @@ class ACClient(BizHawkClient):
         if not in_menu or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
             return {}
         
-        shop_listings_unlock_order: list[Part] = list(all_parts)
+        shop_listings_unlock_order: list[Part] = list(all_parts_data_order)
         purchased_items: typing.Dict[Part, bool] = {}
         # There are 146 entries
         purchased_bytes = (await bizhawk.read(
@@ -465,15 +457,17 @@ class ACClient(BizHawkClient):
         if mission_completion_count > 0:
             start_index: int = 0
             end_index: int = (((mission_completion_count) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]) if ((mission_completion_count) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]) < len(purchased_bytes) 
-                                                                                                                    else len(purchased_bytes) - 1)
+                                                                                                                    else len(purchased_bytes))
             for count, byte in enumerate(purchased_bytes[start_index : end_index]):
                 #print(int.from_bytes(byte, "little", signed = True))
+                true_part_index: int = shop_listings_unlock_order[count].id
                 if byte == 0x00:
-                    # The player has had a shop listing given and then purchased that item
-                    purchased_items[shop_listings_unlock_order[count]] = True
+                    # The player has had a shop listing given and then purchased that item if they also have one or three
+                    if inventory_bytes[true_part_index] == 0x01 or inventory_bytes[true_part_index] == 0x03 or (inventory_bytes[true_part_index] == 0x02 and shop_listings_unlock_order[count] in base_starting_parts):
+                        purchased_items[shop_listings_unlock_order[true_part_index]] = True
                     # It will be 01 if they have just made the purchase but don't have that part in their inventory
-                    if inventory_bytes[count] == 0x01:
-                        inventory_bytes[count] = 0x00
+                    if inventory_bytes[true_part_index] == 0x01:
+                        inventory_bytes[true_part_index] = 0x00
                     # If they've purchased the item but they've already received that part, it doesn't matter if more are given to them
 
         # Inequality signifies that the inventory needs updating
@@ -493,6 +487,20 @@ class ACClient(BizHawkClient):
     # Update shop item and description text when shopsanity is active
     async def shopsanity_update_shop_text(self, ctx: "BizHawkClientContext", menu_section) -> None:
         if menu_section != 1 or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False: # Shop
+            return
+        
+        locations_data = ctx.locations_info
+
+        if len(locations_data) != len(all_parts):
+            from CommonClient import logger
+            # Scout location data for shop text updating purposes!
+            parts_locations_to_scout: typing.List[int] = [get_location_id_for_shop_listing(part) for part in all_parts]
+            await ctx.send_msgs([{
+                "cmd": "LocationScouts",
+                "locations": parts_locations_to_scout,
+                "create_as_hint": 0
+            }])
+            logger.info("Parts location data scouted.\nIf shop names are incorrect, exit and enter shop again.")
             return
         
         # Check if the data needs to be overwritten (Write in a junk value for checking)
@@ -516,10 +524,8 @@ class ACClient(BizHawkClient):
         # Description starts with ~^num before text which defines font size. We'll use ~^8 for now (7E 5E 38)
         # playernames's itemname;itemtype (red colour for progression)
 
-        locations_data = ctx.locations_info
-
         # Take item name and truncate if necessary
-        for counter, part in enumerate(all_parts):
+        for counter, part in enumerate(all_parts_data_order):
             location_info = locations_data[get_location_id_for_shop_listing(part)]
             player_name: str = ctx.player_names[location_info.player]
             item_name: str = ctx.item_names.lookup_in_slot(location_info.item, location_info.player)
@@ -562,6 +568,11 @@ class ACClient(BizHawkClient):
                     [first_part_char_check],
                     MAIN_RAM
                 )])
+
+        # Take item name and truncate if necessary
+        for counter, part in enumerate(all_parts):
+            location_info = locations_data[get_location_id_for_shop_listing(part)]
+            item_name: str = ctx.item_names.lookup_in_slot(location_info.item, location_info.player)
 
             # Shop Listing Name
             listing_name: str = item_name[:12]

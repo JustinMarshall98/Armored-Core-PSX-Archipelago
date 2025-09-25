@@ -13,7 +13,7 @@ from .mail import Mail, all_mail
 from .items import ACItem, create_item as fabricate_item, item_name_to_item_id, create_victory_event
 from .locations import ACLocation, MissionLocation, get_location_name_for_mission, location_name_to_id as location_map, MailLocation, ShopLocation
 from .options import ACOptions
-from .parts import Part, all_parts, base_starting_parts, all_dummy_parts
+from .parts import Part, all_parts, base_starting_parts, all_dummy_parts, all_parts_data_order
 
 class ACWeb(WebWorld):
     theme = "dirt"
@@ -75,7 +75,7 @@ class ACWorld(World):
         self.mission_unlock_order = list(all_missions)
         if self.options.goal == 1: # Progressive Missions
             self.mission_unlock_order.sort(key = lambda m: m.progression_level)
-        self.shop_listing_unlock_order = list(all_parts)
+        self.shop_listing_unlock_order = list(all_parts_data_order)
         # random.shuffle(self.shop_listing_unlock_order) Don't randomize! Need to know what order this will be in
         self.randomized_valid_parts_rewards = list((set(all_parts) - set(all_dummy_parts)) - set(base_starting_parts))
         random.shuffle(self.randomized_valid_parts_rewards)
@@ -118,18 +118,33 @@ class ACWorld(World):
                                          mission_id_to_mission[m.mail.mission_unlock_id] in self.get_available_missions(state)))
                 mission_list_region.locations.append(mail_location)
             else: # It has a different unlock requirement. As of right now these can all be done Out Of Logic, but it leads to a better play pattern
-                if mail.name == "New Parts Added (1)": # Unlocks after 10 missions are completed, so the rule is you must have at least 10 missions (should it be 9? Raven Test?)
-                    mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
-                    set_rule(mail_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 10))
-                    mission_list_region.locations.append(mail_location)
-                elif mail.name == "New Parts Added (2)": # Unlocks after 20 missions are completed, so the rule is you must have at least 20 missions (should it be 19? Raven Test?)
-                    mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
-                    set_rule(mail_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 20))
-                    mission_list_region.locations.append(mail_location)
-                else: #mail.name == "Human Plus": # Unlocks after 13 missions are completed, so the rule is you must have at least 13 missions (should it be 12? Raven Test?)
-                    mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
-                    set_rule(mail_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 13))
-                    mission_list_region.locations.append(mail_location)
+                # Missionsanity Goal
+                if self.options.goal == 0:
+                    if mail.name == "New Parts Added (1)": # Unlocks after 10 missions are completed, so the rule is you must have at least 10 missions (should it be 9? Raven Test?)
+                        mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
+                        set_rule(mail_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 10))
+                        mission_list_region.locations.append(mail_location)
+                    elif mail.name == "New Parts Added (2)": # Unlocks after 20 missions are completed, so the rule is you must have at least 20 missions (should it be 19? Raven Test?)
+                        mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
+                        set_rule(mail_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 20))
+                        mission_list_region.locations.append(mail_location)
+                    else: #mail.name == "Human Plus": # Unlocks after 13 missions are completed, so the rule is you must have at least 13 missions (should it be 12? Raven Test?)
+                        mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
+                        set_rule(mail_location, lambda state: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, 13))
+                        mission_list_region.locations.append(mail_location)
+                else: # Progressive Missions Goal
+                    if mail.name == "New Parts Added (1)": # Unlocks after 10 missions are completed
+                        mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
+                        set_rule(mail_location, lambda state: state.count(Constants.PROGRESSIVE_MISSION_ITEM_NAME, self.player) >= 2)
+                        mission_list_region.locations.append(mail_location)
+                    elif mail.name == "New Parts Added (2)": # Unlocks after 20 missions are completed
+                        mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
+                        set_rule(mail_location, lambda state: state.count(Constants.PROGRESSIVE_MISSION_ITEM_NAME, self.player) >= 4)
+                        mission_list_region.locations.append(mail_location)
+                    else: #mail.name == "Human Plus": # Unlocks after 13 missions are completed
+                        mail_location: MailLocation = MailLocation(mission_list_region, self.player, mail)
+                        set_rule(mail_location, lambda state: state.count(Constants.PROGRESSIVE_MISSION_ITEM_NAME, self.player) >= 3)
+                        mission_list_region.locations.append(mail_location)
 
         # Define Shop Listings locations
         for count, mission in enumerate(self.mission_unlock_order):
@@ -138,11 +153,13 @@ class ACWorld(World):
                                                                                             else len(self.shop_listing_unlock_order))
             for part in self.shop_listing_unlock_order[start_index : end_index]:
                 shop_location: ShopLocation = ShopLocation(mission_list_region, self.player, part)
-                # Shop rules are such that the player has the missions needed to unlock them AND at least one mission that awards credits available
-                set_rule(shop_location, lambda state, c = count: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, c) and 
-                                                        state.has_from_list([m.name for m in self.missions_awarding_credits], self.player, 1))
-                #print(f"{count} {part.name} {mission.name}")
-                #set_rule(shop_location, lambda state, c = count: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, c))
+                # Shop rules are such that the player has the missions needed to unlock them AND at least one mission that awards credits available (which is always true in Progressive Missions Mode)
+                # Missionsanity Goal
+                if self.options.goal == 0:
+                    set_rule(shop_location, lambda state, c = count: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, c) and 
+                                                            state.has_from_list([m.name for m in self.missions_awarding_credits], self.player, 1))
+                else: # Progressive Missions Goal
+                    set_rule(shop_location, lambda state, c = count: state.count(Constants.PROGRESSIVE_MISSION_ITEM_NAME, self.player) >= c // 5)
                 mission_list_region.locations.append(shop_location)
 
         itempool: typing.List[ACItem] = []
@@ -172,7 +189,7 @@ class ACWorld(World):
             # Note to self, list slice should be redundant, but ensures the added amount of items doesn't exceed the length of shopsanity_slots
         filler_slots = filler_slots - shopsanity_slots
         
-        # Credit checks (5000)
+        # Credit checks
         itempool += [self.create_item(Constants.CREDIT_ITEM_NAME) for c in range(filler_slots)][:filler_slots]
 
         # Set Goal item location
