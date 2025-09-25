@@ -2,6 +2,7 @@ import typing
 
 from typing import TYPE_CHECKING
 from NetUtils import ClientStatus
+from BaseClasses import ItemClassification
 from collections import Counter
 import random
 import worlds._bizhawk as bizhawk
@@ -81,6 +82,14 @@ class ACClient(BizHawkClient):
                         shop_listings,
                         MAIN_RAM
                     )])
+            # Scout location data for shop text updating purposes!
+            parts_locations_to_scout: typing.List[int] = [get_location_id_for_shop_listing(part) for part in all_parts]
+            await ctx.send_msgs([{
+                "cmd": "LocationScouts",
+                "locations": parts_locations_to_scout,
+                "create_as_hint": 0
+            }])
+            print("Confirmed parts locations")
 
 
         
@@ -481,6 +490,148 @@ class ACClient(BizHawkClient):
         
         return purchased_items
 
+    # Update shop item and description text when shopsanity is active
+    async def shopsanity_update_shop_text(self, ctx: "BizHawkClientContext", menu_section) -> None:
+        if menu_section != 1 or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False: # Shop
+            return
+        
+        # Check if the data needs to be overwritten (Write in a junk value for checking)
+        first_part_char_check: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.PARTS_TEXT_CHANGE_VERIFY_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        
+        if first_part_char_check != 0x40:
+            return
+        
+        first_part_char_check = 0x4A
+
+        await bizhawk.write(ctx.bizhawk_ctx, [(
+                Constants.PARTS_TEXT_CHANGE_VERIFY_OFFSET,
+                [first_part_char_check],
+                MAIN_RAM
+            )])
+
+        # 12 Character max for new item names
+        # Descriptions can have 36 characters per line and have two lines with '8' point font. ; is newline marker
+        # Description starts with ~^num before text which defines font size. We'll use ~^8 for now (7E 5E 38)
+        # playernames's itemname;itemtype (red colour for progression)
+
+        locations_data = ctx.locations_info
+
+        # Take item name and truncate if necessary
+        for counter, part in enumerate(all_parts):
+            location_info = locations_data[get_location_id_for_shop_listing(part)]
+            player_name: str = ctx.player_names[location_info.player]
+            item_name: str = ctx.item_names.lookup_in_slot(location_info.item, location_info.player)
+            item_type_flags: int = location_info.flags
+            item_type: str
+            if item_type_flags & ItemClassification.progression == ItemClassification.progression:
+                item_type = "@1(Progression)"
+            elif item_type_flags & ItemClassification.filler == ItemClassification.filler:
+                item_type = "@0(Filler)"
+            elif item_type_flags & ItemClassification.trap == ItemClassification.trap:
+                item_type = "@0(Trap)"
+            else:
+                item_type = "@0(Useful)"
+
+            # Description
+
+            # Maximum length for a slot name in AP is 16 characters (I'm going to truncate to 16 as well)
+            # Then item name needs to be truncated to 36 - (nameLength+3) length
+            player_name = player_name[:16]
+            item_name_length: int = 36 - len(player_name) + 3
+            desc_item_name = item_name[:item_name_length]
+
+            description_top: str = f"~^8{player_name}'s {desc_item_name}"
+            description_bottom: str = f";{item_type}"
+            if len(description_bottom) < 36:
+                repeat: int = 36 - len(description_bottom)
+                name_filler: str = "\0" * repeat
+                description_bottom += name_filler
+            description: str = description_top + description_bottom
+            description_as_hex: typing.List[int] = []
+            for i in range(0, len(description)):
+                description_as_hex.append(description[i].encode('utf-8')[0])
+
+            await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.PARTS_DESCRIPTIONS_OFFSET + (0x4E * counter),
+                    description_as_hex,
+                    MAIN_RAM
+                )],[(
+                    Constants.PARTS_TEXT_CHANGE_VERIFY_OFFSET,
+                    [first_part_char_check],
+                    MAIN_RAM
+                )])
+
+            # Shop Listing Name
+            listing_name: str = item_name[:12]
+            if len(listing_name) < 12:
+                repeat: int = 12 - len(listing_name)
+                name_filler: str = "\0" * repeat
+                listing_name += name_filler
+            listing_as_hex: typing.List[int] = []
+            for i in range(0, len(listing_name)):
+                listing_as_hex.append(listing_name[i].encode('utf-8')[0])
+
+            await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.PARTS_NAMES_OFFSETS[counter],
+                    listing_as_hex,
+                    MAIN_RAM
+                )],[(
+                    Constants.PARTS_TEXT_CHANGE_VERIFY_OFFSET,
+                    [first_part_char_check],
+                    MAIN_RAM
+                )])
+
+    # Update shop item and description text when shopsanity is active
+    async def shopsanity_update_garage_text(self, ctx: "BizHawkClientContext", menu_section) -> None:
+        if menu_section != 0 or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False: # Shop
+            return
+        
+        # Check if the data needs to be overwritten (Write in a junk value for checking)
+        first_part_char_check: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.PARTS_TEXT_CHANGE_VERIFY_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        
+        if first_part_char_check != 0x4A:
+            return
+        
+        first_part_char_check = 0x40
+
+        await bizhawk.write(ctx.bizhawk_ctx, [(
+                Constants.PARTS_TEXT_CHANGE_VERIFY_OFFSET,
+                [first_part_char_check],
+                MAIN_RAM
+            )])
+
+        # 12 Character max for new item names
+
+        # Take item name and truncate if necessary
+        for counter, part in enumerate(all_parts):
+            item_name: str = part.name
+
+            print(part.name)
+
+            # Shop Listing Name
+            listing_name: str = item_name[:12]
+            if len(listing_name) < 12:
+                repeat: int = 12 - len(listing_name)
+                name_filler: str = "\0" * repeat
+                listing_name += name_filler
+            listing_as_hex: typing.List[int] = []
+            for i in range(0, len(listing_name)):
+                listing_as_hex.append(listing_name[i].encode('utf-8')[0])
+
+            await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.PARTS_NAMES_OFFSETS[counter],
+                    listing_as_hex,
+                    MAIN_RAM
+                )],[(
+                    Constants.PARTS_TEXT_CHANGE_VERIFY_OFFSET,
+                    [first_part_char_check],
+                    MAIN_RAM
+                )])
+
     # Store the number of successfully completed missions into story progress (For certain Mail's to appear)
     async def force_update_mission_count(self, ctx: "BizHawkClientContext", in_menu) -> None:
         if not in_menu:
@@ -529,6 +680,10 @@ class ACClient(BizHawkClient):
             menu_section: int = await self.ravens_nest_menu_section_check(ctx)
             # Unlock missions based on what has been received
             await self.update_mission_list_code(ctx, menu_section)
+            # Update shop listings text if we're in the shop
+            await self.shopsanity_update_shop_text(ctx, menu_section)
+            # Update part names in the Garage (fix them from opening shop)
+            await self.shopsanity_update_garage_text(ctx, menu_section)
 
             # Credits handling
             await self.award_credits(ctx, in_menu)

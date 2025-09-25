@@ -488,7 +488,7 @@ all_arm_weapon_ls: typing.Tuple[Arm_Weapon_L, ...] = (
 )
 
 
-all_parts: typing.Tuple[Part, ...] = all_heads + all_cores + all_arms + all_legs + all_generators + all_fcs + all_options_parts + all_boosters + all_back_weapons + all_arm_weapon_rs + all_arm_weapon_ls
+all_parts: typing.Tuple[Part, ...] = all_heads + all_cores + all_legs + all_arms + all_arm_weapon_rs + all_back_weapons + all_arm_weapon_ls + all_boosters + all_fcs + all_generators + all_options_parts  
 
 all_dummy_parts: typing.Tuple[Part, ...] = (part for part in all_parts if part.name == "DUMMY" or part.name == "NO WEAPON")
 

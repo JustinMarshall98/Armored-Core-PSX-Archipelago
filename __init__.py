@@ -135,7 +135,7 @@ class ACWorld(World):
         for count, mission in enumerate(self.mission_unlock_order):
             start_index: int = count * self.options.shopsanity_listings_per_mission
             end_index: int = (((count + 1) * self.options.shopsanity_listings_per_mission) if ((count + 1) * self.options.shopsanity_listings_per_mission) < len(self.shop_listing_unlock_order) 
-                                                                                            else len(self.shop_listing_unlock_order) - 1)
+                                                                                            else len(self.shop_listing_unlock_order))
             for part in self.shop_listing_unlock_order[start_index : end_index]:
                 shop_location: ShopLocation = ShopLocation(mission_list_region, self.player, part)
                 # Shop rules are such that the player has the missions needed to unlock them AND at least one mission that awards credits available
