@@ -61,8 +61,8 @@ class CreditCheckAmount(Range):
     Define how much you earn from Credit Filler checks you receieve.
     """
     display_name = "Credit Check Amount"
-    range_start = 1
-    range_end = 1000000
+    range_start = 100
+    range_end = 100000
     default = 5000
 
 @dataclass
