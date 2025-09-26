@@ -45,11 +45,15 @@ top text field of the client and click Connect.
 You should now be able to receive and send items. You'll need to do these steps every time you want to reconnect.
 It is possible to make progress offline if you're already loaded into a mission when you drop your connection,
 but the mission menu restructuring code requires a connection to the Archipelago Bizhawk Client.
+The shop menu when Shopsanity is on also requires a connection to the Bizhawk Client to function properly,
+you may notice oddities with Part names and descriptions if your connection is lost.
 Reconnecting to the server after completing a mission will still send its check out.
 
 ## Notes and Limitations
 
-1. As mentioned above, the mission menu restructuring code requires a connection to the client and a connection to the server.
+1. As mentioned above, the mission menu and shop restructuring code require a connection to the client and a connection to the server.
 2. Checks are sent and received only in the Raven's Nest menu.
 3. Missions that are not unlocked yet currently appear in the mission list as Dummy00.
 This mission is the Raven Test, you won't get anything for completing it again.
+4. The Missions Menu sometimes needs a moment to structure itself properly, hover over it for a second before entering or
+exit and re-enter to get the properly constructed mission selection options.
