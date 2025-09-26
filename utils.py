@@ -37,6 +37,13 @@ class Constants:
     MENU_CURRENT_SELECTION2_VERIFY_OFFSET: int = 0x1A2767
     MENU_LOADED_VERIFY_OFFSET1: int = 0x1A2728
     MENU_LOADED_VERIFY_OFFSET2: int = 0x1A27F8
+    SHOP_SELL_INTERCEPT_OFFSETS: typing.Tuple[int, ...] = (
+        0x0952B4,
+        0x0952CC,
+        0x095220,
+        0x095230,
+    ) # For removing the Sell option
+    SHOP_SELL_TEXT__OFFSET: int = 0x04CC25
     PARTS_DESCRIPTIONS_OFFSET: int = 0x19C360 # Each entry is 0x4E apart
     PARTS_TEXT_CHANGE_VERIFY_OFFSET: int = 0x19F02B # Expected value is 0x40
     PARTS_NAMES_OFFSETS: typing.Tuple[int, ...] = ( # This is so awful lol. all_parts changed to match this order

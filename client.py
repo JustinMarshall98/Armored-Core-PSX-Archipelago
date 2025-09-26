@@ -61,6 +61,55 @@ class ACClient(BizHawkClient):
     async def shopsanity_initialization(self, ctx: "BizHawkClientContext", in_menu) -> None:
         if not in_menu or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
             return []
+        # Disable the Sell option in game
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.SHOP_SELL_INTERCEPT_OFFSETS[0],
+                    [0x00, 0x00, 0x60, 0xA0],
+                    MAIN_RAM
+                )],[(
+                    Constants.SHOP_SELL_INTERCEPT_OFFSETS[0],
+                    [0x00, 0x00, 0x62, 0xA0],
+                    MAIN_RAM
+                )])
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.SHOP_SELL_INTERCEPT_OFFSETS[1],
+                    [0x00, 0x00, 0x60, 0xA0],
+                    MAIN_RAM
+                )],[(
+                    Constants.SHOP_SELL_INTERCEPT_OFFSETS[1],
+                    [0x00, 0x00, 0x62, 0xA0],
+                    MAIN_RAM
+                )])
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.SHOP_SELL_INTERCEPT_OFFSETS[2],
+                    [0x00, 0x00, 0x60, 0xA0],
+                    MAIN_RAM
+                )],[(
+                    Constants.SHOP_SELL_INTERCEPT_OFFSETS[2],
+                    [0x00, 0x00, 0x62, 0xA0],
+                    MAIN_RAM
+                )])
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.SHOP_SELL_INTERCEPT_OFFSETS[3],
+                    [0x00, 0x00, 0x60, 0xA0],
+                    MAIN_RAM
+                )],[(
+                    Constants.SHOP_SELL_INTERCEPT_OFFSETS[3],
+                    [0x00, 0x00, 0x62, 0xA0],
+                    MAIN_RAM
+                )])
+
+        # Change Sell text to BUY2
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.SHOP_SELL_TEXT__OFFSET,
+                    [0x42, 0x55, 0x59, 0x32],
+                    MAIN_RAM
+                )],[(
+                    Constants.SHOP_SELL_TEXT__OFFSET,
+                    [0x53, 0x45, 0x4C, 0x4C],
+                    MAIN_RAM
+                )])
+
         shop_listings: int = int.from_bytes((await bizhawk.read(
             ctx.bizhawk_ctx, [(Constants.SHOPSANITY_TRACKING_OFFSET, 1, MAIN_RAM)]
             ))[0])
