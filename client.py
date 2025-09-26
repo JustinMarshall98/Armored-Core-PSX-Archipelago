@@ -594,7 +594,7 @@ class ACClient(BizHawkClient):
             # Maximum length for a slot name in AP is 16 characters (I'm going to truncate to 16 as well)
             # Then item name needs to be truncated to 36 - (nameLength+3) length
             player_name = player_name[:16]
-            item_name_length: int = 36 - len(player_name) + 3
+            item_name_length: int = 36 - (len(player_name) + 3)
             desc_item_name = item_name[:item_name_length]
 
             description_top: str = f"~^8{player_name}'s {desc_item_name}"
