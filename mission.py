@@ -76,7 +76,7 @@ all_missions: typing.Tuple[Mission, ...] = (
 STARTING_MISSION = all_missions[0]
 DESTROY_FLOATING_MINES = all_missions[-2]
 
-missions_that_award_credits = (mission for mission in all_missions if mission.awards_credits)
+missions_that_award_credits: typing.Tuple[Mission, ...] = {mission for mission in all_missions if mission.awards_credits}
 
 id_to_mission = {mission.id: mission for mission in all_missions}
 name_to_mission = {mission.name: mission for mission in all_missions}
