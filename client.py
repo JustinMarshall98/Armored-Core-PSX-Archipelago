@@ -115,7 +115,7 @@ class ACClient(BizHawkClient):
             ))[0])
         if shop_listings == 0: # The run has just begun, set listings to 1 and remove everything from the shop
             shop_listings = 1
-            new_shop_contents: str = "00" * 146
+            new_shop_contents: str = "00" * 147
             shop_contents_hex: typing.List[int] = []
             for i in range(0, len(new_shop_contents), 2):
                 shop_contents_hex.append(int(new_shop_contents[i:i+2], 16))
@@ -462,7 +462,7 @@ class ACClient(BizHawkClient):
             return []
 
         inventory_bytes = list((await bizhawk.read(
-                ctx.bizhawk_ctx, [(Constants.PARTS_INVENTORY_OFFSET, 146, MAIN_RAM)]
+                ctx.bizhawk_ctx, [(Constants.PARTS_INVENTORY_OFFSET, 147, MAIN_RAM)]
                 ))[0])
         inventory_copy = list(inventory_bytes)
         for item in ctx.items_received:
@@ -493,12 +493,12 @@ class ACClient(BizHawkClient):
         
         shop_listings_unlock_order: list[Part] = list(all_parts_data_order)
         purchased_items: typing.Dict[Part, bool] = {}
-        # There are 146 entries
+        # There are 147 entries
         purchased_bytes = (await bizhawk.read(
-                ctx.bizhawk_ctx, [(Constants.SHOP_INVENTORY_OFFSET, 146, MAIN_RAM)]
+                ctx.bizhawk_ctx, [(Constants.SHOP_INVENTORY_OFFSET, 147, MAIN_RAM)]
                 ))[0]
         inventory_bytes = list((await bizhawk.read(
-                ctx.bizhawk_ctx, [(Constants.PARTS_INVENTORY_OFFSET, 146, MAIN_RAM)]
+                ctx.bizhawk_ctx, [(Constants.PARTS_INVENTORY_OFFSET, 147, MAIN_RAM)]
                 ))[0])
         inventory_copy = list(inventory_bytes)
 
