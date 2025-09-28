@@ -187,7 +187,7 @@ class ACWorld(World):
             shopsanity_slots: int = valid_parts_rewards_count if filler_slots > valid_parts_rewards_count else filler_slots
             itempool += [self.create_item(p.name) for p in self.randomized_valid_parts_rewards[:shopsanity_slots]][:shopsanity_slots] 
             # Note to self, list slice should be redundant, but ensures the added amount of items doesn't exceed the length of shopsanity_slots
-        filler_slots = filler_slots - shopsanity_slots
+            filler_slots = filler_slots - shopsanity_slots
         
         # Credit checks
         itempool += [self.create_item(Constants.CREDIT_ITEM_NAME) for c in range(filler_slots)][:filler_slots]
