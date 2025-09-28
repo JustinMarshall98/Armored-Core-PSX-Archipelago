@@ -109,7 +109,16 @@ class ACClient(BizHawkClient):
                     [0x53, 0x45, 0x4C, 0x4C],
                     MAIN_RAM
                 )])
-
+        # Prevent shop from removing Optional Parts it mistakenly thinks you don't have
+        await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
+                    Constants.SHOP_OVERWRITE_OPTIONAL_PARTS_OFFSET,
+                    [0x00, 0x00, 0x00, 0x00],
+                    MAIN_RAM
+                )],[(
+                    Constants.SHOP_OVERWRITE_OPTIONAL_PARTS_OFFSET,
+                    [0xA0, 0x9C, 0x22, 0xA4],
+                    MAIN_RAM
+                )])
         shop_listings: int = int.from_bytes((await bizhawk.read(
             ctx.bizhawk_ctx, [(Constants.SHOPSANITY_TRACKING_OFFSET, 1, MAIN_RAM)]
             ))[0])

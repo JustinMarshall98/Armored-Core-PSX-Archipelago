@@ -28,7 +28,7 @@ class Constants:
     SHOP_INVENTORY_OFFSET: int = 0x031B34 # Data is 1 Byte
     PARTS_INVENTORY_OFFSET: int = 0x031A94 # Data is 1 Byte
 
-
+    SHOP_OVERWRITE_OPTIONAL_PARTS_OFFSET: int = 0x05b270 # The instruction here performs the check for if optional parts should be removed (if you don't have them in inventory)
     FREESPACE_CODE_OFFSET: int = 0x17f860 # Used for Mission List modification, it's actually where Mail names are stored lol (but we guarded write to prevent Mail from getting messed up)
     MISSION_MENU_HOOK_OFFSET: int = 0x87218 # Used to hack into mission list display routine
     MENU_CURRENT_SELECTION1_OFFSET: int = 0x1A2836 # 1A2837. IE Mail is 0x04, 1A2766,1A2767. 20 or E0 in second values must be checked? WHY is this location moving around ugh
