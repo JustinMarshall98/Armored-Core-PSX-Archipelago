@@ -60,7 +60,7 @@ class CreditCheckAmount(Range):
     display_name = "Credit Check Amount"
     range_start = 100
     range_end = 100000
-    default = 5000
+    default = 10000
 
 @dataclass
 class ACOptions(PerGameCommonOptions):

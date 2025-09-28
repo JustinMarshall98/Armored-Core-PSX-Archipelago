@@ -14,7 +14,7 @@ class Constants:
     VICTORY_LOCATION_ID: int = 0x1
     PROGRESSIVE_MISSION_ITEM_NAME: str = "Progressive Mission"
     PROGRESSIVE_MISSION_ITEM_ID: int = 0x2
-    CREDIT_ITEM_NAME: str = "5000 Credits" # Hardcoded currently
+    CREDIT_ITEM_NAME: str = "Bonus Credits"
     CREDIT_ITEM_ID: int = 0x3
     CREDIT_ITEMS_RECEIVED_OFFSET: int = 0x48664 # We are commandeering the VS Time Limit option memory for this! Sticks in save file
     SHOPSANITY_TRACKING_OFFSET: int = 0x48663 # We are comandeering the VS Stage option memory for this!
