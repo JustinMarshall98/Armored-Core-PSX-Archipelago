@@ -55,5 +55,8 @@ Reconnecting to the server after completing a mission will still send its check 
 2. Checks are sent and received only in the Raven's Nest menu.
 3. Missions that are not unlocked yet currently appear in the mission list as Dummy00.
 This mission is the Raven Test, you won't get anything for completing it again.
-4. The Missions Menu sometimes needs a moment to structure itself properly, hover over it for a second before entering or
-exit and re-enter to get the properly constructed mission selection options.
+4. The Missions Menu / Shop Menu (when shopsanity is on) sometimes need a moment to structure themselves properly, hover over it for a second
+before entering or exit and re-enter to get the properly constructed mission selection options.
+Failing to do so for the Mission Menu can rarely result in a crash.
+5. When Shopsanity is on, Hidden Parts can be obtained either by someone sending the part to you or picking it up in the level its in.
+Once the Hidden Part appears in the shop as a check to be sold however, it will no longer appear in its normal level anymore.
