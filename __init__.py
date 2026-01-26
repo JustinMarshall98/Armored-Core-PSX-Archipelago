@@ -146,21 +146,22 @@ class ACWorld(World):
                         set_rule(mail_location, lambda state: state.count(Constants.PROGRESSIVE_MISSION_ITEM_NAME, self.player) >= 3)
                         mission_list_region.locations.append(mail_location)
 
-        # Define Shop Listings locations
-        for count, mission in enumerate(self.mission_unlock_order):
-            start_index: int = count * self.options.shopsanity_listings_per_mission
-            end_index: int = (((count + 1) * self.options.shopsanity_listings_per_mission) if ((count + 1) * self.options.shopsanity_listings_per_mission) < len(self.shop_listing_unlock_order) 
-                                                                                            else len(self.shop_listing_unlock_order))
-            for part in self.shop_listing_unlock_order[start_index : end_index]:
-                shop_location: ShopLocation = ShopLocation(mission_list_region, self.player, part)
-                # Shop rules are such that the player has the missions needed to unlock them AND at least one mission that awards credits available (which is always true in Progressive Missions Mode)
-                # Missionsanity Goal
-                if self.options.goal == 0:
-                    set_rule(shop_location, lambda state, c = count: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, c) and 
-                                                            state.has_from_list([m.name for m in self.missions_awarding_credits], self.player, 1))
-                else: # Progressive Missions Goal
-                    set_rule(shop_location, lambda state, c = count: state.count(Constants.PROGRESSIVE_MISSION_ITEM_NAME, self.player) >= c // 5)
-                mission_list_region.locations.append(shop_location)
+        # Define Shop Listings locations if shopsanity is on
+        if self.options.shopsanity:
+            for count, mission in enumerate(self.mission_unlock_order):
+                start_index: int = count * self.options.shopsanity_listings_per_mission
+                end_index: int = (((count + 1) * self.options.shopsanity_listings_per_mission) if ((count + 1) * self.options.shopsanity_listings_per_mission) < len(self.shop_listing_unlock_order) 
+                                                                                                else len(self.shop_listing_unlock_order))
+                for part in self.shop_listing_unlock_order[start_index : end_index]:
+                    shop_location: ShopLocation = ShopLocation(mission_list_region, self.player, part)
+                    # Shop rules are such that the player has the missions needed to unlock them AND at least one mission that awards credits available (which is always true in Progressive Missions Mode)
+                    # Missionsanity Goal
+                    if self.options.goal == 0:
+                        set_rule(shop_location, lambda state, c = count: state.has_from_list([m.name for m in self.mission_unlock_order], self.player, c) and 
+                                                                state.has_from_list([m.name for m in self.missions_awarding_credits], self.player, 1))
+                    else: # Progressive Missions Goal
+                        set_rule(shop_location, lambda state, c = count: state.count(Constants.PROGRESSIVE_MISSION_ITEM_NAME, self.player) >= c // 5)
+                    mission_list_region.locations.append(shop_location)
 
         itempool: typing.List[ACItem] = []
         if self.options.goal == 0: # Missionsanity
