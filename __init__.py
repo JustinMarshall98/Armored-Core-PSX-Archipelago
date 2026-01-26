@@ -180,7 +180,7 @@ class ACWorld(World):
         if self.options.include_humanplus:
             humanplus_slots: int = 3 if filler_slots > 3 else filler_slots
             itempool += [self.create_item(Constants.PROGRESSIVE_HUMANPLUS_ITEM_NAME) for h in range(humanplus_slots)][:humanplus_slots]
-        filler_slots = filler_slots - humanplus_slots
+            filler_slots = filler_slots - humanplus_slots
 
         # Then parts if shopsanity is on
         if self.options.shopsanity:
