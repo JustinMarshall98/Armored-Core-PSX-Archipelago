@@ -14,6 +14,7 @@ from .items import ACItem, create_item as fabricate_item, item_name_to_item_id, 
 from .locations import ACLocation, MissionLocation, get_location_name_for_mission, location_name_to_id as location_map, MailLocation, ShopLocation
 from .options import ACOptions
 from .parts import Part, all_parts, base_starting_parts, all_dummy_parts, all_parts_data_order
+from .ac_randomizer import randomize_start_parts
 
 class ACWeb(WebWorld):
     theme = "dirt"
@@ -44,6 +45,8 @@ class ACWorld(World):
     shop_listing_unlock_order: typing.List[Part]
     randomized_valid_parts_rewards: typing.List[Part] # Won't include Dummy or Starting Parts
     missions_awarding_credits: typing.List[Mission]
+    starting_parts: typing.Tuple[Part, ...]
+    starting_parts_str: typing.List[str]
 
     def get_available_missions(self, state: CollectionState) -> typing.List[Mission]:
         available_missions: typing.List[Mission] = [STARTING_MISSION] # Dummy00 is always available
@@ -77,7 +80,18 @@ class ACWorld(World):
             self.mission_unlock_order.sort(key = lambda m: m.progression_level)
         self.shop_listing_unlock_order = list(all_parts_data_order)
         # random.shuffle(self.shop_listing_unlock_order) Don't randomize! Need to know what order this will be in
-        self.randomized_valid_parts_rewards = list((set(all_parts) - set(all_dummy_parts)) - set(base_starting_parts))
+
+        if self.options.rando_start_parts:
+            self.starting_parts = randomize_start_parts()
+        else:
+            self.starting_parts = base_starting_parts
+
+        for part in self.starting_parts:
+            print(part in all_parts)
+            if part in all_parts:
+                print(part.name)
+        self.starting_parts_str = [part.name for part in self.starting_parts if part in all_parts]
+        self.randomized_valid_parts_rewards = list((set(all_parts) - set(all_dummy_parts)) - set(self.starting_parts))
         random.shuffle(self.randomized_valid_parts_rewards)
         self.missions_awarding_credits = list(missions_that_award_credits)
     
@@ -216,5 +230,6 @@ class ACWorld(World):
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
         return {
-            Constants.GAME_OPTIONS_KEY: self.options.serialize()
+            Constants.GAME_OPTIONS_KEY: self.options.serialize(),
+            Constants.STARTING_PARTS_KEY: self.starting_parts_str
         }

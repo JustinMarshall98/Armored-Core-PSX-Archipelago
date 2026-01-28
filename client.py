@@ -13,7 +13,7 @@ from .utils import Constants
 from .locations import get_location_id_for_mission, is_mission_location_id, mission_from_location_id, get_location_id_for_mail, get_location_id_for_shop_listing
 from .mission import Mission, all_missions
 from .mail import Mail, all_mail
-from .parts import Part, all_parts, id_to_part, all_parts_data_order, base_starting_parts
+from .parts import Part, all_parts, id_to_part, all_parts_data_order, base_starting_parts, name_to_part, all_heads, all_cores, all_boosters, all_arms, all_arm_weapon_rs, all_arm_weapon_ls, all_back_weapons, all_generators, all_fcs, all_legs
 
 if TYPE_CHECKING:
     from worlds._bizhawk.context import BizHawkClientContext
@@ -57,6 +57,92 @@ class ACClient(BizHawkClient):
         logger.info(f"Armored Core 1 Client v{__version__}.")
         # Add updates section to logger info
         return True
+    
+    async def randomize_starting_ac(self, ctx: "BizHawkClientContext") -> None:
+        # Check to see if this option is on, if it is:
+        # Check to see if the randomize starting ac flag has been turned on, if not:
+        # Remove base starting parts from players inventory
+        # if Shopsanity is off, put the base starting parts into the shop. Doesn't really matter if new randomized starting parts are in the shop or not
+        # Place new starting parts into inventory
+        # Equip new starting parts onto player
+        # set the flag that the starting ac has been randomized to be on
+        
+        if ctx.slot_data[Constants.GAME_OPTIONS_KEY]["rando_start_parts"] == False:
+            return
+        already_randomized: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.STARTING_AC_RANDO_TRACKING_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        # Need to make sure the player has selected Scenario Mode in the main menu first before randomizing. Expected value if it has been selected: 0x18
+        scenario_mode_selected: int = int.from_bytes((await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.SCENARIO_MODE_SELECTED_OFFSET, 1, MAIN_RAM)]
+            ))[0])
+        if already_randomized == 1 or scenario_mode_selected != 0x18:
+            return
+
+        # Get inventory
+        inventory_bytes = list((await bizhawk.read(
+                ctx.bizhawk_ctx, [(Constants.PARTS_INVENTORY_OFFSET, 147, MAIN_RAM)]
+                ))[0])
+
+        for part in base_starting_parts:
+            inventory_bytes[part.id] = 0x00
+
+        if ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
+            for part in base_starting_parts:
+                    # Put one in the store inventory
+                    await bizhawk.write(ctx.bizhawk_ctx, [(
+                        Constants.SHOP_INVENTORY_OFFSET + part.id,
+                        [0x01],
+                        MAIN_RAM
+                    )])
+        
+        for part_name in ctx.slot_data[Constants.STARTING_PARTS_KEY]:
+            inventory_bytes[name_to_part[part_name].id] = 0x01
+
+        # active parts order for your ac unit is: Core, Boosters, Head, Arms, Arm W L, Arm W R, Back W L, Back W R, Generator, FCS, BLANK, Legs
+        active_parts: typing.List[int] = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
+        for part_name in ctx.slot_data[Constants.STARTING_PARTS_KEY]:
+            # Does this preserve order of parts as defined in init? I don't know that I can rely on that
+            if name_to_part[part_name] in all_cores:
+                active_parts[0] = name_to_part[part_name].id - all_cores[0].id
+            if name_to_part[part_name] in all_boosters:
+                active_parts[1] = name_to_part[part_name].id - all_boosters[0].id
+            if name_to_part[part_name] in all_heads:
+                active_parts[2] = name_to_part[part_name].id - all_heads[0].id
+            if name_to_part[part_name] in all_arms:
+                active_parts[3] = name_to_part[part_name].id - all_arms[0].id
+            if name_to_part[part_name] in all_arm_weapon_ls:
+                active_parts[4] = name_to_part[part_name].id - all_arm_weapon_ls[0].id
+            if name_to_part[part_name] in all_arm_weapon_rs:
+                active_parts[5] = name_to_part[part_name].id - all_arm_weapon_rs[0].id
+            if name_to_part[part_name] in all_back_weapons and active_parts[6] == 0xFF:
+                active_parts[6] = name_to_part[part_name].id - all_back_weapons[0].id
+            elif name_to_part[part_name] in all_back_weapons:
+                active_parts[7] = name_to_part[part_name].id - all_back_weapons[0].id
+            if name_to_part[part_name] in all_generators:
+                active_parts[8] = name_to_part[part_name].id - all_generators[0].id
+            if name_to_part[part_name] in all_fcs:
+                active_parts[9] = name_to_part[part_name].id - all_fcs[0].id
+            if name_to_part[part_name] in all_legs:
+                active_parts[11] = name_to_part[part_name].id - all_legs[0].id
+            
+        # Write the inventory, then the players new AC parts, then the AC is randomized flag
+        await bizhawk.write(ctx.bizhawk_ctx, [(
+                    Constants.PARTS_INVENTORY_OFFSET,
+                    inventory_bytes,
+                    MAIN_RAM
+                )])
+        await bizhawk.write(ctx.bizhawk_ctx, [(
+                    Constants.CURRENT_AC_PARTS_OFFSET,
+                    active_parts,
+                    MAIN_RAM
+                )])
+        await bizhawk.write(ctx.bizhawk_ctx, [(
+                    Constants.STARTING_AC_RANDO_TRACKING_OFFSET,
+                    [0x01],
+                    MAIN_RAM
+                )])
+
     
     async def shopsanity_initialization(self, ctx: "BizHawkClientContext", in_menu) -> None:
         if not in_menu or ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"] == False:
@@ -728,6 +814,9 @@ class ACClient(BizHawkClient):
             # Timing matters less on this than it does for the menu_section_check 
             # (which is right before the function that needs it)
             in_menu: bool = await self.ravens_nest_menu_check(ctx)
+
+            # Handles randomizing a players starting AC
+            await self.randomize_starting_ac(ctx)
 
             # Blanks the entire shop at the start of the run so it can be properly updated (if shopsanity is on)
             await self.shopsanity_initialization(ctx, in_menu)

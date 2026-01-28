@@ -18,6 +18,7 @@ class Constants:
     CREDIT_ITEM_ID: int = 0x3
     CREDIT_ITEMS_RECEIVED_OFFSET: int = 0x48664 # We are commandeering the VS Time Limit option memory for this! Sticks in save file
     SHOPSANITY_TRACKING_OFFSET: int = 0x48663 # We are comandeering the VS Stage option memory for this!
+    STARTING_AC_RANDO_TRACKING_OFFSET: int = 0x48665 # Comandeering this hopefully useless byte* in the players save file memory for this! 01 = randomized
     PLAYER_CREDITS_OFFSET: int = 0x39CA4 # Data is 4 byte size, signed integer. Min max should be +/- 99,999,999.
     HUMANPLUS_LEVEL_OFFSET: int = 0x039D20 # Data is 1 byte size. The three levels are 01/04/06
     PROGRESSIVE_HUMANPLUS_ITEM_NAME: str = "Progressive Human+"
@@ -27,6 +28,9 @@ class Constants:
     SUCCESSFUL_SORTIES_COUNT_OFFSET: int = 0x1F3780 # Data is 1 Byte
     SHOP_INVENTORY_OFFSET: int = 0x031B34 # Data is 1 Byte
     PARTS_INVENTORY_OFFSET: int = 0x031A94 # Data is 1 Byte
+    CURRENT_AC_PARTS_OFFSET: int = 0x31A58 # Data is 12 bytes long, 1 byte for each part and 1 blank
+    SCENARIO_MODE_SELECTED_OFFSET: int = 0x31A5F # This is technically the players equipped Back Weapon R, but when you select Scenario Mode on the main menu
+    # The value changes from 0x13 to 0x18. That's what we'll be using as a failsafe for our starting AC rando check
 
     SHOP_OVERWRITE_OPTIONAL_PARTS_OFFSET: int = 0x05b270 # The instruction here performs the check for if optional parts should be removed (if you don't have them in inventory)
     FREESPACE_CODE_OFFSET: int = 0x17f860 # Used for Mission List modification, it's actually where Mail names are stored lol (but we guarded write to prevent Mail from getting messed up)
@@ -198,3 +202,4 @@ class Constants:
     
 
     GAME_OPTIONS_KEY: str = "g"
+    STARTING_PARTS_KEY: str = "p"

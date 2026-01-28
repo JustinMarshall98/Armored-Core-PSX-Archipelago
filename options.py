@@ -53,6 +53,13 @@ class ShopsanityListingsPerMission(Range):
     range_end = 146
     default = 4
 
+class RandomizeStartingParts(DefaultOffToggle):
+    """
+    Your starting AC Parts will be randomized but still
+    adhere to weight and energy limits.
+    """
+    display_name = "Randomize Starting Mech"
+
 class CreditCheckAmount(Range):
     """
     Define how much you earn from Credit Filler checks you receieve.
@@ -69,6 +76,7 @@ class ACOptions(PerGameCommonOptions):
     include_humanplus: IncludeHumanPlusFiller
     shopsanity: Shopsanity
     shopsanity_listings_per_mission: ShopsanityListingsPerMission
+    rando_start_parts: RandomizeStartingParts
     credit_check_amount: CreditCheckAmount
 
     def serialize(self) -> typing.Dict[str, int]:
