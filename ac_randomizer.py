@@ -289,14 +289,13 @@ def generate_AC():
     else : 
         ac_back_weapon_l_status = "NO EQUIP"
 
-    if ac_arm_weapon_r == True:
+    if ac_arm_weapon_r_status == "VALID":
         ac_remaining_energy -= ac_arm_weapon_r.energy_drain
-
-    if ac_arm_weapon_l == True:
+    if ac_arm_weapon_l_status == "VALID":
         ac_remaining_energy -= ac_arm_weapon_l.energy_drain
-    if ac_back_weapon_r == True:
+    if ac_back_weapon_r_status == "VALID":
         ac_remaining_energy -= ac_back_weapon_r.energy_drain
-    if ac_back_weapon_l == True:
+    if ac_back_weapon_l_status == "VALID":
         ac_remaining_energy -= ac_back_weapon_l.energy_drain
 
     if ac_arms.part_type != "ARM UNIT": #Flag for Weapon names 
