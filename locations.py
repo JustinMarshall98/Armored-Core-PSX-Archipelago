@@ -91,4 +91,7 @@ shop_listing_location_name_to_id: typing.Dict[str, int] = {}
 for part in all_parts:
     shop_listing_location_name_to_id[get_location_name_for_shop_listing(part)] = get_location_id_for_shop_listing(part)
 
-location_name_to_id: typing.Dict[str, int] = {**mission_location_name_to_id, **mail_location_name_to_id, **shop_listing_location_name_to_id}
+victory_location_name_to_id: typing.Dict[str, int] = {}
+victory_location_name_to_id[Constants.VICTORY_LOCATION_NAME] = Constants.VICTORY_LOCATION_ID
+
+location_name_to_id: typing.Dict[str, int] = {**mission_location_name_to_id, **mail_location_name_to_id, **shop_listing_location_name_to_id, **victory_location_name_to_id}
