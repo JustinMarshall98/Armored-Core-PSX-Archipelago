@@ -311,6 +311,81 @@ def generate_AC():
     else:
         invalid_AC = False
 
+    # Check for invalid part combinations
+
+    if ac_legs.part_type == "CATERPILLAR":
+        if ac_back_weapon_l.name == "RZ-BBP" or ac_back_weapon_r.name == "RZ-BBP":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "RZ-A1" or ac_back_weapon_r.name == "RZ-A1":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "RXA-99" or ac_back_weapon_r.name == "RXA-99":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "RZ-A0" or ac_back_weapon_r.name == "RZ-A0":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "RXA-01WE" or ac_back_weapon_r.name == "RXA-01WE":
+            invalid_AC = True
+        
+        if ac_arm_weapon_r.name == "WG-1-KARASAWA":
+            invalid_AC = True
+        
+        # Is it even possible for the ranom generator not generate a booster? That would mean tank legs are never possible
+        if ac_booster != None:
+            invalid_AC = True
+    elif ac_legs.part_type == "FOUR LEGS TYPE":
+        if ac_arm_weapon_r.name == "WG-1-KARASAWA":
+            invalid_AC = True
+    if ac_arms.name == "ANKS-1A46J":
+        if ac_back_weapon_l.name == "WM-S40/1" or ac_back_weapon_r.name == "WM-S40/1":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-S40/2" or ac_back_weapon_r.name == "WM-S40/2":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-S60/4" or ac_back_weapon_r.name == "WM-S60/4":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-S60/6" or ac_back_weapon_r.name == "WM-S60/6":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-MVG404" or ac_back_weapon_r.name == "WM-MVG404":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-MVG802" or ac_back_weapon_r.name == "WM-MVG802":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-L201" or ac_back_weapon_r.name == "WM-L201":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-X201" or ac_back_weapon_r.name == "WM-X201":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-X5-AA" or ac_back_weapon_r.name == "WM-X5-AA":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-X10" or ac_back_weapon_r.name == "WM-X10":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-P4001" or ac_back_weapon_r.name == "WM-P4001":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WM-PS-2" or ac_back_weapon_r.name == "WM-PS-2":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WR-S50" or ac_back_weapon_r.name == "WR-S50":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WR-S100" or ac_back_weapon_r.name == "WR-S100":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WR-M50" or ac_back_weapon_r.name == "WR-M50":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WR-M70" or ac_back_weapon_r.name == "WR-M70":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WR-L24" or ac_back_weapon_r.name == "WR-L24":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WC-CN35" or ac_back_weapon_r.name == "WC-CN35":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WC-ST120" or ac_back_weapon_r.name == "WC-ST120":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WC-LN350" or ac_back_weapon_r.name == "WC-LN350":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WC-GN230" or ac_back_weapon_r.name == "WC-GN230":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WC-XP4000" or ac_back_weapon_r.name == "WC-XP4000":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WC-XC8000" or ac_back_weapon_r.name == "WC-XC8000":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WC-01QL" or ac_back_weapon_r.name == "WC-01QL":
+            invalid_AC = True
+        elif ac_back_weapon_l.name == "WX-S800-GF" or ac_back_weapon_r.name == "WX-S800-GF":
+            invalid_AC = True
+
     return (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status)
 
 

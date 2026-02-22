@@ -86,10 +86,6 @@ class ACWorld(World):
         else:
             self.starting_parts = base_starting_parts
 
-        for part in self.starting_parts:
-            print(part in all_parts)
-            if part in all_parts:
-                print(part.name)
         self.starting_parts_str = [part.name for part in self.starting_parts if part in all_parts]
         self.randomized_valid_parts_rewards = list((set(all_parts) - set(all_dummy_parts)) - set(self.starting_parts))
         random.shuffle(self.randomized_valid_parts_rewards)
