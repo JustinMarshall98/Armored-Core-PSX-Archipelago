@@ -82,7 +82,7 @@ class ACWorld(World):
         # random.shuffle(self.shop_listing_unlock_order) Don't randomize! Need to know what order this will be in
 
         if self.options.rando_start_parts:
-            self.starting_parts = randomize_start_parts()
+            self.starting_parts = randomize_start_parts(self.options.start_parts_tier)
         else:
             self.starting_parts = base_starting_parts
 

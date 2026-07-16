@@ -5,19 +5,21 @@ import random
 import typing
 #Randomizer can generate ACs with weighting on Specific tiers. Check Parts.py to see Tiers of parts.
 
-def get_random_head_by_tier():
-    tiers = [1, 2, 3, 4] 
-    tier_weights = [100, 0, 0, 0] # %chance of each part being selected by the tier.  50, 50, 0 ,0 for example means that you have 50% chance of getting a T1 or T2 Part. No T3 or T4 in Pool.
+def get_random_head_by_tier(tier: int):
+    #tiers = [1, 2, 3, 4] 
+    #tier_weights = [100, 0, 0, 0] # %chance of each part being selected by the tier.  50, 50, 0 ,0 for example means that you have 50% chance of getting a T1 or T2 Part. No T3 or T4 in Pool.
 
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_heads = heads_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2:
         eligible_heads = heads_by_tier[2]
-    elif selected_tier == 3:
+    elif tier == 3:
         eligible_heads = heads_by_tier[3]
-    elif selected_tier == 4:
+    elif tier == 4:
+        eligible_heads = heads_by_tier[4]
+    elif tier == 5:
         eligible_heads = all_heads
     else:
         return None
@@ -25,160 +27,177 @@ def get_random_head_by_tier():
 
     return random.choice(eligible_heads)
 
-def get_random_core_by_tier():
-    tiers = [1, 2]
-    tier_weights = [50, 50]
+def get_random_core_by_tier(tier: int):
+    #tiers = [1, 2]
+    #tier_weights = [50, 50]
 
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_cores = cores_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2 or tier == 3 or tier == 4:
+        eligible_cores  = cores_by_tier[2]
+    elif tier == 5:
         eligible_cores  = all_cores
     else:
         return None
 
     return random.choice(eligible_cores)
 
-def get_random_arms_by_tier():
-    tiers = [1, 2, 3, 4]
-    tier_weights = [100, 0, 0, 0]
+def get_random_arms_by_tier(tier: int):
+    #tiers = [1, 2, 3, 4]
+    #tier_weights = [100, 0, 0, 0]
 
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_Arms = arms_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2:
         eligible_Arms = arms_by_tier[2]
-    elif selected_tier == 3 or selected_tier == 4:
-        eligible_Arms  = all_arms
+    elif tier == 3:
+        eligible_Arms = arms_by_tier[3]
+    elif tier == 4:
+        eligible_Arms = arms_by_tier[3] + arms_by_tier[4] # Tier 4 arms are only weapon arms if the 3 pool isn't included here
+    elif tier == 5:
+        eligible_Arms = [arms for arms in all_arms if arms.tier != 5]
     else:
         return None
 
     return random.choice(eligible_Arms)
 
-def get_random_legs_by_tier():
-    tiers = [1, 2, 3, 4]
-    tier_weights = [100, 0, 0, 0]
+def get_random_legs_by_tier(tier: int):
+    #tiers = [1, 2, 3, 4]
+    #tier_weights = [100, 0, 0, 0]
 
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_Legs = legs_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2:
         eligible_Legs = legs_by_tier[2]
-    elif selected_tier == 3:
+    elif tier == 3:
         eligible_Legs  = legs_by_tier[3]
-    elif selected_tier == 4:
+    elif tier == 4:
         eligible_Legs = legs_by_tier[4]
-
+    elif tier == 5:
+        eligible_Legs = [legs for legs in all_legs if legs.tier != 5]
     else:
         return None
 
     return random.choice(eligible_Legs)
 
-def get_random_booster_by_tier():
-    tiers = [1, 2, 3]
-    tier_weights = [100, 0, 0]
+def get_random_booster_by_tier(tier: int):
+    #tiers = [1, 2, 3]
+    #tier_weights = [100, 0, 0]
 
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_booster = booster_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2:
         eligible_booster = booster_by_tier[2]
-    elif selected_tier == 3:
-        eligible_booster  = all_boosters
+    elif tier == 3 or tier == 4:
+        eligible_booster  = booster_by_tier[3]
+    elif tier == 5:
+        eligible_booster = all_boosters
     else:
         return None
 
     return random.choice(eligible_booster)
 
-def get_random_generator_by_tier():
-    tiers = [1, 2, 3, 4]
-    tier_weights = [100, 0, 0, 0]
+def get_random_generator_by_tier(tier: int):
+    #tiers = [1, 2, 3, 4]
+    #tier_weights = [100, 0, 0, 0]
 
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_generators = generator_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2:
         eligible_generators = generator_by_tier[2]
-    elif selected_tier == 3 or selected_tier == 4:
+    elif tier == 3 or tier == 4:
+        eligible_generators = generator_by_tier[3]
+    elif tier == 5:
         eligible_generators = all_generators
     else:
         return None
 
     return random.choice(eligible_generators)
 
-def get_random_FCS_by_tier():
-    tiers = [1, 2, 3]
-    tier_weights = [100, 0, 0]
+def get_random_FCS_by_tier(tier: int):
+    #tiers = [1, 2, 3]
+    #tier_weights = [100, 0, 0]
 
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_FCS = fcs_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2:
         eligible_FCS = fcs_by_tier[2]
-    elif selected_tier == 3:
-        eligible_FCS  = all_fcs
+    elif tier == 3 or tier == 4:
+        eligible_FCS = fcs_by_tier[3]
+    elif tier == 5:
+        eligible_FCS = all_fcs
     else:
         return None
 
     return random.choice(eligible_FCS)
 
-def get_random_Arm_Weapon_R_by_tier():
-    tiers = [1, 2, 3, 4]
-    tier_weights = [100, 0, 0, 0]
+def get_random_Arm_Weapon_R_by_tier(tier: int):
+    #tiers = [1, 2, 3, 4]
+    #tier_weights = [100, 0, 0, 0]
 
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_Arm_r = arm_weapon_r_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2:
         eligible_Arm_r = arm_weapon_r_by_tier[2]
-    elif selected_tier == 3:
+    elif tier == 3 or tier == 4: # No tier 4 right arm weapons
         eligible_Arm_r = arm_weapon_r_by_tier[3]
-    elif selected_tier == 4:
-        eligible_Arm_r = all_arm_weapon_rs
+    #elif tier == 4:
+    #    eligible_Arm_r = arm_weapon_r_by_tier[4]
+    elif tier == 5:
+        eligible_Arm_r = [r_arm for r_arm in all_arm_weapon_rs if r_arm.tier != 5]
     else:
         return None
 
     return random.choice(eligible_Arm_r)
 
-def get_random_Arm_Weapon_L_by_tier():
-    tiers = [1, 2, 3]
-    tier_weights = [100, 0, 0]
+def get_random_Arm_Weapon_L_by_tier(tier: int):
+    #tiers = [1, 2, 3]
+    #tier_weights = [100, 0, 0]
 
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_Arm_l = arm_weapon_l_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2:
         eligible_Arm_l = arm_weapon_l_by_tier[2]
-    elif selected_tier == 3:
+    elif tier == 3 or tier == 4:
         eligible_Arm_l = arm_weapon_l_by_tier[3]
-    elif selected_tier == 4:
+    elif tier == 5:
         eligible_Arm_l = all_arm_weapon_ls
     else:
         return None
 
     return random.choice(eligible_Arm_l)
 
-def get_Back_Weapon_by_tier(guarantee_unlocked, RADAR):
-    tiers = [1, 2, 3, 4]
-    tier_weights = [100, 0, 0, 0]
+def get_Back_Weapon_by_tier(guarantee_unlocked, RADAR, tier):
+    #tiers = [1, 2, 3, 4]
+    #tier_weights = [100, 0, 0, 0]
       
-    selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
+    #selected_tier = random.choices(tiers, weights = tier_weights, k=1)[0]
 
-    if selected_tier == 1:
+    if tier == 1:
         eligible_Back_Weapon = back_weapon_by_tier[1]
-    elif selected_tier == 2:
+    elif tier == 2:
         eligible_Back_Weapon = back_weapon_by_tier[2]
-    elif selected_tier == 3:
+    elif tier == 3:
         eligible_Back_Weapon = back_weapon_by_tier[3]
-    elif selected_tier == 4:
+    elif tier == 4:
+        eligible_Back_Weapon = back_weapon_by_tier[4]
+    elif tier == 5:
         eligible_Back_Weapon = all_back_weapons
     else:
         return None
@@ -209,24 +228,19 @@ def get_Back_Weapon_by_tier(guarantee_unlocked, RADAR):
             else: 
                 back_weapon_inelgible = False
 
-
-    #print(f"Selected tier: {selected_tier}")
-    #print(f"Eligible weapons for this tier: {eligible_Back_Weapon}")
-    #print(guarantee_unlocked)
-
     return back_weapon
 
 
-def generate_AC():
-    ac_head = get_random_head_by_tier()
-    ac_core = get_random_core_by_tier()
-    ac_arms = get_random_arms_by_tier()
-    ac_legs = get_random_legs_by_tier()
-    ac_booster = get_random_booster_by_tier()
-    ac_generator = get_random_generator_by_tier()
-    ac_FCS = get_random_FCS_by_tier()
-    ac_arm_weapon_r = get_random_Arm_Weapon_R_by_tier()
-    ac_arm_weapon_l = get_random_Arm_Weapon_L_by_tier()
+def generate_AC(tier: int):
+    ac_head = get_random_head_by_tier(tier)
+    ac_core = get_random_core_by_tier(tier)
+    ac_arms = get_random_arms_by_tier(tier)
+    ac_legs = get_random_legs_by_tier(tier)
+    ac_booster = get_random_booster_by_tier(tier)
+    ac_generator = get_random_generator_by_tier(tier)
+    ac_FCS = get_random_FCS_by_tier(tier)
+    ac_arm_weapon_r = get_random_Arm_Weapon_R_by_tier(tier)
+    ac_arm_weapon_l = get_random_Arm_Weapon_L_by_tier(tier)
 
     ac_arm_weapon_r_status = "VALID"
     ac_arm_weapon_l_status = "VALID"
@@ -245,7 +259,7 @@ def generate_AC():
     
     if  ac_arms.part_type == "ARM UNIT":
         if  0 <= percentage_chance_r <= 100:
-            ac_arm_weapon_r = get_random_Arm_Weapon_R_by_tier()
+            ac_arm_weapon_r = get_random_Arm_Weapon_R_by_tier(tier)
         if random.random() < percentage_chance_r / 100:
                 ac_remaining_weight -= ac_arm_weapon_r.weight
         else:
@@ -254,7 +268,7 @@ def generate_AC():
         if 0 <= percentage_chance_l <= 100: #Laser Blade Guaranteed if Arm Weapon R is not generated.
             if ac_arm_weapon_r_status == "NO EQUIP":
                 percentage_chance_l = 100
-            ac_arm_weapon_l = get_random_Arm_Weapon_L_by_tier()
+            ac_arm_weapon_l = get_random_Arm_Weapon_L_by_tier(tier)
             if random.random() < percentage_chance_l / 100:
                 ac_remaining_weight -= ac_arm_weapon_l.weight
             else:
@@ -269,7 +283,7 @@ def generate_AC():
 
     if ac_arm_weapon_l_status == "NO EQUIP" or ac_arm_weapon_l_status == "EQUIPMENT IMPOSSIBLE" or ac_arm_weapon_r_status == "NO EQUIP" or ac_arm_weapon_r_status == "EQUIPMENT IMPOSSIBLE":    
         percentage_chance_back_r = 100
-    ac_back_weapon_r = get_Back_Weapon_by_tier(guarantee_unlocked = ac_arms.part_type != "ARM UNIT", RADAR = False)
+    ac_back_weapon_r = get_Back_Weapon_by_tier(guarantee_unlocked = ac_arms.part_type != "ARM UNIT", RADAR = False, tier = tier)
     if random.random() < percentage_chance_back_r / 100:
         ac_remaining_weight -= ac_back_weapon_r.weight 
     
@@ -282,7 +296,7 @@ def generate_AC():
 
     if ac_back_weapon_r.part_type == "RADAR":
         percentage_chance_back_l = 100
-    ac_back_weapon_l = get_Back_Weapon_by_tier(guarantee_unlocked = False, RADAR = True)
+    ac_back_weapon_l = get_Back_Weapon_by_tier(guarantee_unlocked = False, RADAR = True, tier = tier)
     if random.random() < percentage_chance_back_l / 100:
         ac_remaining_weight -= ac_back_weapon_l.weight
     
@@ -327,9 +341,9 @@ def generate_AC():
         if ac_arm_weapon_r.name == "WG-1-KARASAWA":
             invalid_AC = True
         
-        # Is it even possible for the ranom generator not generate a booster? That would mean tank legs are never possible
-        if ac_booster != None:
-            invalid_AC = True
+        # Is it even possible for the random generator not generate a booster? That would mean tank legs are never possible
+        #if ac_booster != None:
+        #    invalid_AC = True
     elif ac_legs.part_type == "FOUR LEGS TYPE":
         if ac_arm_weapon_r.name == "WG-1-KARASAWA":
             invalid_AC = True
@@ -388,12 +402,12 @@ def generate_AC():
     return (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status)
 
 
-def randomize_start_parts():
-    (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status) = generate_AC()
+def randomize_start_parts(tier: int):
+    (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status) = generate_AC(tier)
     
     while invalid_AC == True:
         print ("Invalid AC Detected: Retrying...")
-        (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status) = generate_AC()
+        (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status) = generate_AC(tier)
 
     if ac_arm_weapon_l_status == "NO EQUIP":
         ac_arm_weapon_l = "NO EQUIP"

@@ -60,6 +60,19 @@ class RandomizeStartingParts(DefaultOffToggle):
     """
     display_name = "Randomize Starting Mech"
 
+class RandomizedStartingPartsTier(Range):
+    """
+    This option only matters if your Starting Parts are randomized.
+    Select how strong you'd like your starting AC to be, generally.
+    Each tier restricts the possible parts pulled,
+    tier 1 is the weakest tier, tier 4 is the strongest.
+    Tier 5 allows parts from any tier to be chosen.
+    """
+    display_name = "Starting Parts Tier"
+    range_start = 1
+    range_end = 5
+    default = 2
+
 class CreditCheckAmount(Range):
     """
     Define how much you earn from Credit Filler checks you receieve.
@@ -77,6 +90,7 @@ class ACOptions(PerGameCommonOptions):
     shopsanity: Shopsanity
     shopsanity_listings_per_mission: ShopsanityListingsPerMission
     rando_start_parts: RandomizeStartingParts
+    start_parts_tier: RandomizedStartingPartsTier
     credit_check_amount: CreditCheckAmount
 
     def serialize(self) -> typing.Dict[str, int]:
