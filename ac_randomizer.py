@@ -14,12 +14,10 @@ def get_random_head_by_tier(tier: int):
     if tier == 1:
         eligible_heads = heads_by_tier[1]
     elif tier == 2:
-        eligible_heads = heads_by_tier[2]
+        eligible_heads = heads_by_tier[1] + heads_by_tier[2]
     elif tier == 3:
-        eligible_heads = heads_by_tier[3]
+        eligible_heads = heads_by_tier[1] + heads_by_tier[2] + heads_by_tier[3]
     elif tier == 4:
-        eligible_heads = heads_by_tier[4]
-    elif tier == 5:
         eligible_heads = all_heads
     else:
         return None
@@ -35,9 +33,9 @@ def get_random_core_by_tier(tier: int):
 
     if tier == 1:
         eligible_cores = cores_by_tier[1]
-    elif tier == 2 or tier == 3 or tier == 4:
+    elif tier == 2:
         eligible_cores  = cores_by_tier[2]
-    elif tier == 5:
+    elif tier == 3 or tier == 4:
         eligible_cores  = all_cores
     else:
         return None
@@ -53,12 +51,10 @@ def get_random_arms_by_tier(tier: int):
     if tier == 1:
         eligible_Arms = arms_by_tier[1]
     elif tier == 2:
-        eligible_Arms = arms_by_tier[2]
+        eligible_Arms = arms_by_tier[1] + arms_by_tier[2]
     elif tier == 3:
-        eligible_Arms = arms_by_tier[3]
+        eligible_Arms = arms_by_tier[1] + arms_by_tier[2] + arms_by_tier[3]
     elif tier == 4:
-        eligible_Arms = arms_by_tier[3] + arms_by_tier[4] # Tier 4 arms are only weapon arms if the 3 pool isn't included here
-    elif tier == 5:
         eligible_Arms = [arms for arms in all_arms if arms.tier != 5]
     else:
         return None
@@ -74,12 +70,10 @@ def get_random_legs_by_tier(tier: int):
     if tier == 1:
         eligible_Legs = legs_by_tier[1]
     elif tier == 2:
-        eligible_Legs = legs_by_tier[2]
+        eligible_Legs = legs_by_tier[1] + legs_by_tier[2]
     elif tier == 3:
-        eligible_Legs  = legs_by_tier[3]
+        eligible_Legs  = legs_by_tier[1] + legs_by_tier[2] + legs_by_tier[3]
     elif tier == 4:
-        eligible_Legs = legs_by_tier[4]
-    elif tier == 5:
         eligible_Legs = [legs for legs in all_legs if legs.tier != 5]
     else:
         return None
@@ -95,10 +89,10 @@ def get_random_booster_by_tier(tier: int):
     if tier == 1:
         eligible_booster = booster_by_tier[1]
     elif tier == 2:
-        eligible_booster = booster_by_tier[2]
-    elif tier == 3 or tier == 4:
-        eligible_booster  = booster_by_tier[3]
-    elif tier == 5:
+        eligible_booster = booster_by_tier[1] + booster_by_tier[2]
+    elif tier == 3:
+        eligible_booster  = booster_by_tier[1] + booster_by_tier[2] + booster_by_tier[3]
+    elif tier == 4:
         eligible_booster = all_boosters
     else:
         return None
@@ -114,10 +108,10 @@ def get_random_generator_by_tier(tier: int):
     if tier == 1:
         eligible_generators = generator_by_tier[1]
     elif tier == 2:
-        eligible_generators = generator_by_tier[2]
-    elif tier == 3 or tier == 4:
-        eligible_generators = generator_by_tier[3]
-    elif tier == 5:
+        eligible_generators = generator_by_tier[1] + generator_by_tier[2]
+    elif tier == 3:
+        eligible_generators = generator_by_tier[1] + generator_by_tier[2] + generator_by_tier[3]
+    elif tier == 4:
         eligible_generators = all_generators
     else:
         return None
@@ -133,10 +127,10 @@ def get_random_FCS_by_tier(tier: int):
     if tier == 1:
         eligible_FCS = fcs_by_tier[1]
     elif tier == 2:
-        eligible_FCS = fcs_by_tier[2]
-    elif tier == 3 or tier == 4:
-        eligible_FCS = fcs_by_tier[3]
-    elif tier == 5:
+        eligible_FCS = fcs_by_tier[1] + fcs_by_tier[2]
+    elif tier == 3:
+        eligible_FCS = fcs_by_tier[1] + fcs_by_tier[2] + fcs_by_tier[3]
+    elif tier == 4:
         eligible_FCS = all_fcs
     else:
         return None
@@ -152,12 +146,10 @@ def get_random_Arm_Weapon_R_by_tier(tier: int):
     if tier == 1:
         eligible_Arm_r = arm_weapon_r_by_tier[1]
     elif tier == 2:
-        eligible_Arm_r = arm_weapon_r_by_tier[2]
-    elif tier == 3 or tier == 4: # No tier 4 right arm weapons
-        eligible_Arm_r = arm_weapon_r_by_tier[3]
-    #elif tier == 4:
-    #    eligible_Arm_r = arm_weapon_r_by_tier[4]
-    elif tier == 5:
+        eligible_Arm_r = arm_weapon_r_by_tier[1] + arm_weapon_r_by_tier[2]
+    elif tier == 3:
+        eligible_Arm_r = arm_weapon_r_by_tier[1] + arm_weapon_r_by_tier[2] + arm_weapon_r_by_tier[3]
+    elif tier == 4:
         eligible_Arm_r = [r_arm for r_arm in all_arm_weapon_rs if r_arm.tier != 5]
     else:
         return None
@@ -173,10 +165,10 @@ def get_random_Arm_Weapon_L_by_tier(tier: int):
     if tier == 1:
         eligible_Arm_l = arm_weapon_l_by_tier[1]
     elif tier == 2:
-        eligible_Arm_l = arm_weapon_l_by_tier[2]
-    elif tier == 3 or tier == 4:
-        eligible_Arm_l = arm_weapon_l_by_tier[3]
-    elif tier == 5:
+        eligible_Arm_l = arm_weapon_l_by_tier[1] + arm_weapon_l_by_tier[2]
+    elif tier == 3:
+        eligible_Arm_l = arm_weapon_l_by_tier[1] + arm_weapon_l_by_tier[2] + arm_weapon_l_by_tier[3]
+    elif tier == 4:
         eligible_Arm_l = all_arm_weapon_ls
     else:
         return None
@@ -192,12 +184,10 @@ def get_Back_Weapon_by_tier(guarantee_unlocked, RADAR, tier):
     if tier == 1:
         eligible_Back_Weapon = back_weapon_by_tier[1]
     elif tier == 2:
-        eligible_Back_Weapon = back_weapon_by_tier[2]
+        eligible_Back_Weapon = back_weapon_by_tier[1] + back_weapon_by_tier[2]
     elif tier == 3:
-        eligible_Back_Weapon = back_weapon_by_tier[3]
+        eligible_Back_Weapon = back_weapon_by_tier[1] + back_weapon_by_tier[2] + back_weapon_by_tier[3]
     elif tier == 4:
-        eligible_Back_Weapon = back_weapon_by_tier[4]
-    elif tier == 5:
         eligible_Back_Weapon = all_back_weapons
     else:
         return None

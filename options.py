@@ -71,14 +71,15 @@ class RandomizeStartingParts(DefaultOffToggle):
 class RandomizedStartingPartsTier(Range):
     """
     This option only matters if your Starting Parts are randomized.
-    Select how strong you'd like your starting AC to be, generally.
-    Each tier restricts the possible parts pulled,
-    tier 1 is the weakest tier, tier 4 is the strongest.
-    Tier 5 allows parts from any tier to be chosen.
+    Select how strong the random equipment in the pool is.
+    Each tier includes the parts from the previous tier,
+    so Tier 1 will always have the worst possible parts,
+    Tier 2 includes Tier 1 and Tier 2, Tier 3 has 1, 2 and 3,
+    Tier 4 includes all possible parts.
     """
     display_name = "Starting Parts Tier"
     range_start = 1
-    range_end = 5
+    range_end = 4
     default = 2
 
 class CreditCheckAmount(Range):
