@@ -246,17 +246,25 @@ def generate_AC(tier: int):
     ac_arm_weapon_l_status = "VALID"
     ac_back_weapon_r_status = "VALID"
     ac_back_weapon_l_status = "VALID"
+    ac_booster_status = "VALID"
     percentage_chance_r = 80  #Base Percentage chances can me modified here. Logic will still give 100% for specific parts if rolls are unsuccessful.
     percentage_chance_l = 50
     percentage_chance_back_r = 50
     percentage_chance_back_l = 33
 
-    ac_remaining_weight = ac_legs.max_weight - ac_core.weight - ac_generator.weight - ac_arms.weight - ac_booster.weight - ac_head.weight - ac_FCS.weight
+    ac_remaining_weight = ac_legs.max_weight - ac_core.weight - ac_generator.weight - ac_arms.weight - ac_head.weight - ac_FCS.weight
 
     ac_core_weight = ac_core.max_weight - ac_arms.weight
 
-    ac_remaining_energy = ac_generator.energy_output - ac_core.energy_drain - ac_legs.energy_drain - ac_arms.energy_drain - ac_booster.energy_drain - ac_head.energy_drain - ac_FCS.energy_drain
+    ac_remaining_energy = ac_generator.energy_output - ac_core.energy_drain - ac_legs.energy_drain - ac_arms.energy_drain - ac_head.energy_drain - ac_FCS.energy_drain
     
+    # Attempted fix for allowing tank legs (preventing booster rando if you get tank legs...)
+    if ac_legs.part_type == "CATERPILLAR":
+        ac_booster_status = "EQUIPMENT IMPOSSIBLE"
+    else:
+        ac_remaining_weight -= ac_booster.weight
+        ac_remaining_energy -= ac_booster.energy_drain
+
     if  ac_arms.part_type == "ARM UNIT":
         if  0 <= percentage_chance_r <= 100:
             ac_arm_weapon_r = get_random_Arm_Weapon_R_by_tier(tier)
@@ -340,10 +348,10 @@ def generate_AC(tier: int):
         
         if ac_arm_weapon_r.name == "WG-1-KARASAWA":
             invalid_AC = True
-        
-        # Is it even possible for the random generator not generate a booster? That would mean tank legs are never possible
-        #if ac_booster != None:
-        #    invalid_AC = True
+
+        # Should no longer be possible
+        if ac_booster_status != "EQUIPMENT IMPOSSIBLE":
+            invalid_AC = True
     elif ac_legs.part_type == "FOUR LEGS TYPE":
         if ac_arm_weapon_r.name == "WG-1-KARASAWA":
             invalid_AC = True
@@ -399,15 +407,15 @@ def generate_AC(tier: int):
         elif ac_back_weapon_l.name == "WX-S800-GF" or ac_back_weapon_r.name == "WX-S800-GF":
             invalid_AC = True
 
-    return (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status)
+    return (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status, ac_booster_status)
 
 
 def randomize_start_parts(tier: int):
-    (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status) = generate_AC(tier)
+    (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status, ac_booster_status) = generate_AC(tier)
     
     while invalid_AC == True:
         print ("Invalid AC Detected: Retrying...")
-        (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status) = generate_AC(tier)
+        (invalid_AC, ac_head, ac_core, ac_arms, ac_legs, ac_booster, ac_generator, ac_FCS, ac_arm_weapon_r, ac_arm_weapon_l, ac_back_weapon_r, ac_back_weapon_l, ac_remaining_weight, ac_core_weight, ac_remaining_energy, ac_arm_weapon_r_status, ac_arm_weapon_l_status, ac_back_weapon_r_status, ac_back_weapon_l_status, ac_booster_status) = generate_AC(tier)
 
     if ac_arm_weapon_l_status == "NO EQUIP":
         ac_arm_weapon_l = "NO EQUIP"
@@ -424,13 +432,16 @@ def randomize_start_parts(tier: int):
     if ac_back_weapon_l_status == "NO EQUIP":
         ac_back_weapon_l     = "NO EQUIP"
 
-    print (ac_head.name)
-    print (ac_core.name)
-    print (ac_arms.name)
-    print (ac_legs.name)
-    print (ac_booster.name)
-    print (ac_generator.name)
-    print (ac_FCS.name)
+    if ac_booster_status == "EQUIPMENT IMPOSSIBLE":
+        ac_booster = "NO EQUIP"
+
+    print (ac_head)
+    print (ac_core)
+    print (ac_arms)
+    print (ac_legs)
+    print (ac_booster)
+    print (ac_generator)
+    print (ac_FCS)
     print (ac_arm_weapon_r)
     print (ac_arm_weapon_l)
     print (ac_back_weapon_r)

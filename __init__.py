@@ -1,4 +1,5 @@
 import typing
+from typing import TextIO
 import warnings
 import random
 
@@ -229,3 +230,10 @@ class ACWorld(World):
             Constants.GAME_OPTIONS_KEY: self.options.serialize(),
             Constants.STARTING_PARTS_KEY: self.starting_parts_str
         }
+    
+    def write_spoiler(self, spoiler_handle: TextIO) -> None:
+        spoiler_handle.write(f"\nPlayer {self.player}'s Starting AC Parts:")
+        self.starting_parts_str = [part.name for part in self.starting_parts if part in all_parts]
+        for part in self.starting_parts:
+            if part in all_parts:
+                spoiler_handle.write(f"\n{part.part_type}: {part.name}")
