@@ -526,7 +526,7 @@ class ACClient(BizHawkClient):
             for i in range(shop_listings, mission_completion_count):
                 start_index: int = i * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]
                 end_index: int = (((i + 1) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]) if ((i + 1) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity_listings_per_mission"]) < len(shop_listings_unlock_order) 
-                                                                                            else len(shop_listings_unlock_order) - 1)
+                                                                                            else len(shop_listings_unlock_order))
                 for part in shop_listings_unlock_order[start_index : end_index]:
                     # Put one in the store inventory
                     await bizhawk.write(ctx.bizhawk_ctx, [(
@@ -607,7 +607,8 @@ class ACClient(BizHawkClient):
                 true_part_index: int = shop_listings_unlock_order[count].id
                 if byte == 0x00:
                     # The player has had a shop listing given and then purchased that item if they also have one or three
-                    if inventory_bytes[true_part_index] == 0x01 or inventory_bytes[true_part_index] == 0x03 or (inventory_bytes[true_part_index] == 0x02 and shop_listings_unlock_order[count] in base_starting_parts):
+                    # Sorry to anyone reading this code, I will fix this in the future lmao
+                    if inventory_bytes[true_part_index] == 0x01 or inventory_bytes[true_part_index] == 0x03 or (inventory_bytes[true_part_index] == 0x02 and ((ctx.slot_data[Constants.GAME_OPTIONS_KEY]["rando_start_parts"] == False and shop_listings_unlock_order[count] in base_starting_parts) or (ctx.slot_data[Constants.GAME_OPTIONS_KEY]["rando_start_parts"] == True and shop_listings_unlock_order[count].name in ctx.slot_data[Constants.STARTING_PARTS_KEY]))):
                         purchased_items[shop_listings_unlock_order[true_part_index]] = True
                     # It will be 01 if they have just made the purchase but don't have that part in their inventory
                     if inventory_bytes[true_part_index] == 0x01:
@@ -801,8 +802,10 @@ class ACClient(BizHawkClient):
         
     
     async def game_watcher(self, ctx: "BizHawkClientContext") -> None:
-        if ctx.slot_data is not None:
+        if ctx.slot_data is None:
+            return
 
+        try:
             if not ctx.finished_game and any((item.item == Constants.VICTORY_ITEM_ID) for item in ctx.items_received):
                 await ctx.send_msgs([{
                     "cmd": "StatusUpdate",
@@ -891,3 +894,6 @@ class ACClient(BizHawkClient):
                         "cmd": "LocationChecks",
                         "locations": list(new_local_check_locations)
                     }])
+        except bizhawk.RequestFailedError:
+            # The connector didn't respond, exit the handler then return to the main loop to reconnect
+            pass
