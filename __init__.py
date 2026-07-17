@@ -17,6 +17,7 @@ from .options import ACOptions
 from .parts import Part, all_parts, base_starting_parts, all_dummy_parts, all_parts_data_order
 from .ac_randomizer import randomize_start_parts
 from .raven import all_ravens
+from .data import location_groups
 
 class ACWeb(WebWorld):
     theme = "dirt"
@@ -39,6 +40,8 @@ class ACWorld(World):
     options: ACOptions
     required_client_version = (0, 5, 0)
     web = ACWeb()
+
+    location_name_groups = location_groups
 
     location_name_to_id = location_map
     item_name_to_id = item_name_to_item_id
