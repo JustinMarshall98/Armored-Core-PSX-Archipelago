@@ -29,4 +29,5 @@ There are many valid Parts subcategories that have been made into Location Group
 - Arm Weapon Rs
 - Arm Weapon Ls
 - Dummy
+
 These location groups refer to the locations associated with each part in the Shop when Shopsanity is on.

@@ -802,7 +802,7 @@ class ACClient(BizHawkClient):
         
     async def read_raven_defeats(self, ctx: "BizHawkClientContext", in_menu) -> typing.Dict[Raven, bool]:
         if not in_menu:
-            return
+            return {}
         ravens_defeated: typing.Dict[Raven,bool] = {}
         # Valkyrie
         rank_bytes: bytes = (await bizhawk.read(
