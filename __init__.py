@@ -109,10 +109,18 @@ class ACWorld(World):
         # Missionsanity Goal
         if self.options.goal == 0:
             for mission in self.mission_unlock_order:
-                mission_location: MissionLocation = MissionLocation(mission_list_region, self.player, mission)
-                set_rule(mission_location, (lambda state, m=mission_location:
-                                            m.mission in self.get_available_missions(state)))
-                mission_list_region.locations.append(mission_location)
+                if mission is DESTROY_FLOATING_MINES:
+                    # Placing some additional restrictions on Destroy Floating Mines due to its difficulty for a better play experience
+                    mission_location: MissionLocation = MissionLocation(mission_list_region, self.player, mission)
+                    set_rule(mission_location, (lambda state, m=mission_location:
+                                                m.mission in self.get_available_missions(state) and
+                                                    len(self.get_available_missions(state)) >= 10))
+                    mission_list_region.locations.append(mission_location)
+                else:
+                    mission_location: MissionLocation = MissionLocation(mission_list_region, self.player, mission)
+                    set_rule(mission_location, (lambda state, m=mission_location:
+                                                m.mission in self.get_available_missions(state)))
+                    mission_list_region.locations.append(mission_location)
         else: # Progressive Missions Goal
             for mission in self.mission_unlock_order:
                 if mission is not DESTROY_FLOATING_MINES:
@@ -181,11 +189,20 @@ class ACWorld(World):
         # If the option is on, create locations for defeating ranked ravens
         if self.options.ranking_ravens:
             for raven in all_ravens:
-                raven_location: RavenLocation = RavenLocation(mission_list_region, self.player, raven)
-                # The player must have access to the mission required to fight and defeat the specific Raven
-                set_rule(raven_location, (lambda state, r=raven_location:
-                                             mission_id_to_mission[r.raven.mission_access_id] in self.get_available_missions(state)))
-                mission_list_region.locations.append(raven_location)
+                if raven.name == "Nine-Ball":
+                    # Nine-Ball gets the same additional requirements as Destroy Floating Mines as he is an extremely difficulty opponent, for a better play experience.
+                    raven_location: RavenLocation = RavenLocation(mission_list_region, self.player, raven)
+                    # The player must have access to the mission required to fight and defeat the specific Raven
+                    set_rule(raven_location, (lambda state, r=raven_location:
+                                                mission_id_to_mission[r.raven.mission_access_id] in self.get_available_missions(state) and
+                                                len(self.get_available_missions(state)) >= 10))
+                    mission_list_region.locations.append(raven_location)
+                else:
+                    raven_location: RavenLocation = RavenLocation(mission_list_region, self.player, raven)
+                    # The player must have access to the mission required to fight and defeat the specific Raven
+                    set_rule(raven_location, (lambda state, r=raven_location:
+                                                mission_id_to_mission[r.raven.mission_access_id] in self.get_available_missions(state)))
+                    mission_list_region.locations.append(raven_location)
 
 
         itempool: typing.List[ACItem] = []
@@ -238,6 +255,9 @@ class ACWorld(World):
         menu_region.connect(mission_list_region)
         self.multiworld.regions.append(mission_list_region)
         self.multiworld.regions.append(menu_region)
+
+    def get_filler_item_name(self) -> str:
+        return Constants.CREDIT_ITEM_NAME
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
         return {
