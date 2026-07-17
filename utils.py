@@ -32,6 +32,12 @@ class Constants:
     SCENARIO_MODE_SELECTED_OFFSET: int = 0x31A5F # This is technically the players equipped Back Weapon R, but when you select Scenario Mode on the main menu
     # The value changes from 0x13 to 0x18. That's what we'll be using as a failsafe for our starting AC rando check
 
+    VALKYRIE_RANK_OFFSET: int = 0x49e78
+    NINEBALL_RANK_OFFSET: int = 0x49e74
+    FEFNIR_RANK_OFFSET: int = 0x49e7c
+    KAMUI_MK17_RANK_OFFSET: int = 0x49e90
+    SLEDGEHAMMER_RANK_OFFSET: int = 0x49ea4
+
     SHOP_OVERWRITE_OPTIONAL_PARTS_OFFSET: int = 0x05b270 # The instruction here performs the check for if optional parts should be removed (if you don't have them in inventory)
     FREESPACE_CODE_OFFSET: int = 0x17f860 # Used for Mission List modification, it's actually where Mail names are stored lol (but we guarded write to prevent Mail from getting messed up)
     MISSION_MENU_HOOK_OFFSET: int = 0x87218 # Used to hack into mission list display routine

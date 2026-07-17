@@ -12,10 +12,11 @@ from .utils import Constants
 from .mission import Mission, all_missions, STARTING_MISSION, DESTROY_FLOATING_MINES, id_to_mission as mission_id_to_mission, missions_that_award_credits
 from .mail import Mail, all_mail
 from .items import ACItem, create_item as fabricate_item, item_name_to_item_id, create_victory_event
-from .locations import ACLocation, MissionLocation, get_location_name_for_mission, location_name_to_id as location_map, MailLocation, ShopLocation
+from .locations import ACLocation, MissionLocation, get_location_name_for_mission, location_name_to_id as location_map, MailLocation, ShopLocation, RavenLocation
 from .options import ACOptions
 from .parts import Part, all_parts, base_starting_parts, all_dummy_parts, all_parts_data_order
 from .ac_randomizer import randomize_start_parts
+from .raven import all_ravens
 
 class ACWeb(WebWorld):
     theme = "dirt"
@@ -173,6 +174,16 @@ class ACWorld(World):
                     else: # Progressive Missions Goal
                         set_rule(shop_location, lambda state, c = count: state.count(Constants.PROGRESSIVE_MISSION_ITEM_NAME, self.player) >= c // 5)
                     mission_list_region.locations.append(shop_location)
+
+        # If the option is on, create locations for defeating ranked ravens
+        if self.options.ranking_ravens:
+            for raven in all_ravens:
+                raven_location: RavenLocation = RavenLocation(mission_list_region, self.player, raven)
+                # The player must have access to the mission required to fight and defeat the specific Raven
+                set_rule(raven_location, (lambda state, r=raven_location:
+                                             mission_id_to_mission[r.raven.mission_access_id] in self.get_available_missions(state)))
+                mission_list_region.locations.append(raven_location)
+
 
         itempool: typing.List[ACItem] = []
         if self.options.goal == 0: # Missionsanity

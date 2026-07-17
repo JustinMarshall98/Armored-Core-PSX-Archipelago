@@ -29,6 +29,14 @@ class MissionsanityGoalRequirement(Range):
     range_end = 46
     default = 46
 
+class RankingRavens(DefaultOffToggle):
+    """
+    If this option is on, locations will be added for defeating
+    the following Ranked Ravens in combat missions:
+    Valkyrie, Fefnir, Kamui Mk. 17, Sledgehammer, and Nine-Ball.
+    """
+    display_name = "Ranking Ravens"
+
 class IncludeHumanPlusFiller(DefaultOnToggle):
     """
     If this option is on, three "Progressive Human+"
@@ -86,6 +94,7 @@ class CreditCheckAmount(Range):
 class ACOptions(PerGameCommonOptions):
     goal: Goal
     missionsanity_goal_requirement: MissionsanityGoalRequirement
+    ranking_ravens: RankingRavens
     include_humanplus: IncludeHumanPlusFiller
     shopsanity: Shopsanity
     shopsanity_listings_per_mission: ShopsanityListingsPerMission

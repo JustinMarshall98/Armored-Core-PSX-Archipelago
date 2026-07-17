@@ -5,6 +5,7 @@ from .mission import Mission, all_missions, id_to_mission
 from .utils import Constants
 from .mail import Mail, all_mail, id_to_mail
 from .parts import Part, all_parts
+from .raven import all_ravens, Raven
 
 def get_location_name_for_mission(mission: Mission) -> str:
     return f"{mission.name} Completed"
@@ -40,6 +41,16 @@ def get_location_id_for_shop_listing_id(part_id: int) -> int:
 
 def get_location_id_for_shop_listing(part: Part) -> int:
     return get_location_id_for_shop_listing_id(part.id)
+
+
+def get_location_name_for_raven(raven: Raven) -> str:
+    return f"Defeat {raven.name}"
+
+def get_location_id_for_raven_id(raven_id: int) -> int:
+    return Constants.VALKYRIE_RANK_OFFSET + raven_id # Arbitrarily deciding to use Valkyries rank offset for this
+
+def get_location_id_for_raven(raven: Raven) -> int:
+    return get_location_id_for_raven_id(raven.id)
 
 
 class ACLocation(Location):
@@ -91,7 +102,18 @@ shop_listing_location_name_to_id: typing.Dict[str, int] = {}
 for part in all_parts:
     shop_listing_location_name_to_id[get_location_name_for_shop_listing(part)] = get_location_id_for_shop_listing(part)
 
+class RavenLocation(ACLocation):
+    # Location for defeating a Ranked Raven in combat
+    raven: Raven
+    def __init__(self, region: Region, player: int, raven: Raven):
+        super().__init__(region, player, get_location_name_for_raven(raven), get_location_id_for_raven(raven))
+        self.raven = raven
+
+raven_location_name_to_id: typing.Dict[str, int] = {}
+for raven in all_ravens:
+    raven_location_name_to_id[get_location_name_for_raven(raven)] = get_location_id_for_raven(raven)
+
 victory_location_name_to_id: typing.Dict[str, int] = {}
 victory_location_name_to_id[Constants.VICTORY_LOCATION_NAME] = Constants.VICTORY_LOCATION_ID
 
-location_name_to_id: typing.Dict[str, int] = {**mission_location_name_to_id, **mail_location_name_to_id, **shop_listing_location_name_to_id, **victory_location_name_to_id}
+location_name_to_id: typing.Dict[str, int] = {**mission_location_name_to_id, **mail_location_name_to_id, **shop_listing_location_name_to_id, **raven_location_name_to_id, **victory_location_name_to_id}
