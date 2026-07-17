@@ -10,10 +10,11 @@ from worlds._bizhawk.client import BizHawkClient
 
 from .version import __version__
 from .utils import Constants
-from .locations import get_location_id_for_mission, is_mission_location_id, mission_from_location_id, get_location_id_for_mail, get_location_id_for_shop_listing
+from .locations import get_location_id_for_mission, is_mission_location_id, mission_from_location_id, get_location_id_for_mail, get_location_id_for_shop_listing, get_location_id_for_raven
 from .mission import Mission, all_missions
 from .mail import Mail, all_mail
 from .parts import Part, all_parts, id_to_part, all_parts_data_order, base_starting_parts, name_to_part, all_heads, all_cores, all_boosters, all_arms, all_arm_weapon_rs, all_arm_weapon_ls, all_back_weapons, all_generators, all_fcs, all_legs
+from .raven import Raven, all_ravens
 
 if TYPE_CHECKING:
     from worlds._bizhawk.context import BizHawkClientContext
@@ -434,7 +435,7 @@ class ACClient(BizHawkClient):
                 if item.item == Constants.CREDIT_ITEM_ID:
                     received_credit_drops += 1
 
-        from CommonClient import logger
+        #from CommonClient import logger
         
         if received_credit_drops > stored_credit_drops:
             # Award the difference to the player
@@ -442,12 +443,12 @@ class ACClient(BizHawkClient):
                 ctx.bizhawk_ctx, [(Constants.PLAYER_CREDITS_OFFSET, 4, MAIN_RAM)]
                 ))
             player_credit: int = int.from_bytes(player_credit_bytes[0], "little", signed = True)
-            logger.info(f"Player credits read as {player_credit}")
+            #logger.info(f"Player credits read as {player_credit}")
             p1, p2, p3, p4 = (player_credit & 0xFFFFFFFF).to_bytes(4, "little")
             player_credit = player_credit + ((received_credit_drops - stored_credit_drops) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["credit_check_amount"])
             c1, c2, c3, c4 = (player_credit & 0xFFFFFFFF).to_bytes(4, "little")
-            logger.info(f"Attempting to award {(received_credit_drops - stored_credit_drops) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"]}, new total should be {player_credit}")
-            logger.info(f"bytes {player_credit.to_bytes(4, "little", signed = True)} and {player_credit_bytes} and {player_credit_bytes[0]} and {c1} {c2} {c3} {c4}")
+            #logger.info(f"Attempting to award {(received_credit_drops - stored_credit_drops) * ctx.slot_data[Constants.GAME_OPTIONS_KEY]["shopsanity"]}, new total should be {player_credit}")
+            #logger.info(f"bytes {player_credit.to_bytes(4, "little", signed = True)} and {player_credit_bytes} and {player_credit_bytes[0]} and {c1} {c2} {c3} {c4}")
             # Guarded write based on read in credit amount. Stops things from messing up when the game is updating credit value
             award_success: bool = await bizhawk.guarded_write(ctx.bizhawk_ctx, [(
                     Constants.PLAYER_CREDITS_OFFSET,
@@ -798,6 +799,42 @@ class ACClient(BizHawkClient):
                     [int.from_bytes(completed_sorties_byte)],
                     MAIN_RAM
                 )])
+        
+    async def read_raven_defeats(self, ctx: "BizHawkClientContext", in_menu) -> typing.Dict[Raven, bool]:
+        if not in_menu:
+            return
+        ravens_defeated: typing.Dict[Raven,bool] = {}
+        # Valkyrie
+        rank_bytes: bytes = (await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.VALKYRIE_RANK_OFFSET, 2, MAIN_RAM)]
+            ))[0]
+        if int.from_bytes(rank_bytes) == 0x00:
+            ravens_defeated[all_ravens[0]] = True
+        # Nine-Ball
+        rank_bytes = (await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.NINEBALL_RANK_OFFSET, 2, MAIN_RAM)]
+            ))[0]
+        if int.from_bytes(rank_bytes) == 0x00:
+            ravens_defeated[all_ravens[1]] = True
+        # Fefnir
+        rank_bytes = (await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.FEFNIR_RANK_OFFSET, 2, MAIN_RAM)]
+            ))[0]
+        if int.from_bytes(rank_bytes) == 0x00:
+            ravens_defeated[all_ravens[2]] = True
+        # Kamui Mk. 17
+        rank_bytes = (await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.KAMUI_MK17_RANK_OFFSET, 2, MAIN_RAM)]
+            ))[0]
+        if int.from_bytes(rank_bytes) == 0x00:
+            ravens_defeated[all_ravens[3]] = True
+        # Sledgehammer
+        rank_bytes = (await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.SLEDGEHAMMER_RANK_OFFSET, 2, MAIN_RAM)]
+            ))[0]
+        if int.from_bytes(rank_bytes) == 0x00:
+            ravens_defeated[all_ravens[4]] = True
+        return ravens_defeated
 
         
     
@@ -870,6 +907,8 @@ class ACClient(BizHawkClient):
 
             items_purchased: typing.Dict[Part, bool] = await self.check_purchased_items(ctx, completed_missions_flags.count(True), in_menu)
 
+            ravens_defeated: typing.Dict[Raven, bool] = await self.read_raven_defeats(ctx, in_menu)
+
             new_local_check_locations = set([
                 get_location_id_for_mission(key) for key, value in missions_to_completed.items() if value
             ])
@@ -880,6 +919,10 @@ class ACClient(BizHawkClient):
 
             new_local_check_locations = new_local_check_locations.union(set([
                 get_location_id_for_shop_listing(key) for key, value in items_purchased.items()
+            ]))
+
+            new_local_check_locations = new_local_check_locations.union(set([
+                get_location_id_for_raven(key) for key, value in ravens_defeated.items()
             ]))
 
             # Award game completion if in missionsanity mode and you've reached the mission goal threshold
