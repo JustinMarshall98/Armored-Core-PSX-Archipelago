@@ -37,7 +37,7 @@ all_missions: typing.Tuple[Mission, ...] = (
     Mission(0xf, "Exterminate Organisms(2)", 7, True),
 #   Mission(0x10, "16 Omitted", 0),
     Mission(0x11, "Guard Wharf Warehouse", 4, True),
-    Mission(0x12, "Remove Base Occupants", 7, True),
+    Mission(0x12, "Remove Base Occupants", 7, False),
     Mission(0x13, "Destroy Space Catapult", 8, True),
     Mission(0x14, "Destroy Base Generator", 8, True),
     Mission(0x15, "Mop Up Chrome Remnants(1)", 9, True),
