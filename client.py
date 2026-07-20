@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from NetUtils import ClientStatus
 from BaseClasses import ItemClassification
 from collections import Counter
-import random
+from random import Random
 import worlds._bizhawk as bizhawk
 from worlds._bizhawk.client import BizHawkClient
 
@@ -28,10 +28,16 @@ class ACClient(BizHawkClient):
     patch_suffix: str = ".apac"
     local_checked_locations: typing.Set[int]
     checked_version_string: bool
+    local_last_deathlink: float
+    recovered_from_death: bool
+    random: Random
 
     def __init__(self) -> None:
         super().__init__()
         self.local_checked_locations = set()
+        self.local_last_deathlink = float("-inf")
+        self.recovered_from_death = True
+        self.random = Random()
 
     async def validate_rom(self, ctx: "BizHawkClientContext") -> bool:
 
@@ -288,6 +294,71 @@ class ACClient(BizHawkClient):
             if menu_verification == MENU_LOADED_BYTES:
                 return True
             return False
+    
+    # return: True/False if it detects that we are in a mission
+    # Mission active bytes- bytes([0x01, 0x00, 0x00, 0x02])
+    # At Menu_Loaded_Verify_Offset1
+    async def in_mission_check(self, ctx: "BizHawkClientContext") -> bool:
+        IN_MISSION_BYTES: bytes = bytes([0x01, 0x00, 0x00])
+        mission_verification: bytes = (await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.MENU_LOADED_VERIFY_OFFSET1, 3, MAIN_RAM)]
+            ))[0]
+        #print(IN_MISSION_BYTES)
+        #print(mission_verification)
+        #print(mission_verification == IN_MISSION_BYTES)
+        if mission_verification == IN_MISSION_BYTES:
+            return True
+        else:
+            return False
+        
+
+    async def handle_deathlink(self, ctx: "BizHawkClientContext") -> None:
+        if "DeathLink" in ctx.tags and self.recovered_from_death:
+            #print("Ready to send Deathlink")
+            # If someone has died with deathlink
+            if ctx.last_death_link > self.local_last_deathlink:
+                #print("recognized someone has died with deathlink")
+                self.local_last_deathlink = ctx.last_death_link
+                await self.trigger_death(ctx)
+            # Else check if we've died!
+            elif await self.check_death(ctx):
+                #print("we've died with deathlink!")
+                await self.send_death(ctx)
+
+    # If deathlink is on and they are in a mission, check to see if they're dead
+    async def check_death(self, ctx: "BizHawkClientContext") -> bool:
+        health: bytes = (await bizhawk.read(
+            ctx.bizhawk_ctx, [(Constants.HEALTH_OFFSET, 2, MAIN_RAM)]
+            ))[0]
+        #print(health)
+        #print(int.from_bytes(health) <= 0)
+        if int.from_bytes(health) <= 0:
+            # We are dead
+            return True
+        else:
+            # We are alive!
+            return False
+
+    # When deathlink is triggered, it runs this, which kills the player after 30 frames, ending their mission in a loss
+    async def trigger_death(self, ctx: "BizHawkClientContext") -> None:
+        self.recovered_from_death = False
+        await bizhawk.write(ctx.bizhawk_ctx, [(
+                    Constants.DESTRUCTION_COUNTDOWN_OFFSET,
+                    [0x1E],
+                    MAIN_RAM
+                )])
+        return
+    
+    async def send_death(self, ctx: "BizHawkClientContext") -> None:
+        # Don't send if we haven't recovered
+        self.recovered_from_death = False
+        death_text: list[str] = [
+            (f"COM : {ctx.player_names[typing.cast(int, ctx.slot)]}'s Defenses damaged\nHalting combat mode\nAnd returning to the Nest"),
+            (f"COM : {ctx.player_names[typing.cast(int, ctx.slot)]}'s AC unit destroyed\nCombat halted"),
+            (f"COM : {ctx.player_names[typing.cast(int, ctx.slot)]}'s Defenses damaged\nCannot continue combat")
+        ]
+        await ctx.send_death(death_text = self.random.choice(death_text))
+        return
 
     # return: 0-5 indicates what part of the ravens nest menu we are hovering / in. -1 means we are not in the ravens nest menu.
     async def ravens_nest_menu_section_check(self, ctx: "BizHawkClientContext") -> int:
@@ -850,10 +921,20 @@ class ACClient(BizHawkClient):
                 }])
                 ctx.finished_game = True
 
+            if ctx.slot_data[Constants.DEATHLINK_OPTION_KEY]:
+                await ctx.update_death_link(True)
+
             # Find out if we are in the Ravens Nest Menu
             # Timing matters less on this than it does for the menu_section_check 
             # (which is right before the function that needs it)
             in_menu: bool = await self.ravens_nest_menu_check(ctx)
+
+            # If we've returned to the ravens nest menu, set that we have recovered from death for deathlink purposes
+            # And prevent stale deathlinks that happen before connection / while in the menu from killing you right when you enter a mission
+            if in_menu:
+                self.recovered_from_death = True
+                if ctx.last_death_link > self.local_last_deathlink:
+                    self.local_last_deathlink = ctx.last_death_link
 
             # Handles randomizing a players starting AC
             await self.randomize_starting_ac(ctx)
@@ -937,6 +1018,10 @@ class ACClient(BizHawkClient):
                         "cmd": "LocationChecks",
                         "locations": list(new_local_check_locations)
                     }])
+            
+            # Handle Deathlink
+            if await self.in_mission_check(ctx):
+                await self.handle_deathlink(ctx)
         except bizhawk.RequestFailedError:
             # The connector didn't respond, exit the handler then return to the main loop to reconnect
             pass

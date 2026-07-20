@@ -262,12 +262,14 @@ class ACWorld(World):
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
         return {
             Constants.GAME_OPTIONS_KEY: self.options.serialize(),
-            Constants.STARTING_PARTS_KEY: self.starting_parts_str
+            Constants.STARTING_PARTS_KEY: self.starting_parts_str,
+            Constants.DEATHLINK_OPTION_KEY: self.options.death_link.value
         }
     
     def write_spoiler(self, spoiler_handle: TextIO) -> None:
-        spoiler_handle.write(f"\nPlayer {self.player}'s Starting AC Parts:")
+        spoiler_handle.write(f"\n{self.player_name}'s Starting AC Parts:")
         self.starting_parts_str = [part.name for part in self.starting_parts if part in all_parts]
         for part in self.starting_parts:
             if part in all_parts:
                 spoiler_handle.write(f"\n{part.part_type}: {part.name}")
+        spoiler_handle.write("\n")

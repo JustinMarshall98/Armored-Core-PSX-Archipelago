@@ -1,7 +1,7 @@
 import typing
 import dataclasses
 
-from Options import Range, Choice, PerGameCommonOptions, DefaultOnToggle, Toggle as DefaultOffToggle
+from Options import Range, Choice, PerGameCommonOptions, DefaultOnToggle, Toggle as DefaultOffToggle, DeathLink
 from dataclasses import dataclass
 
 class Goal(Choice):
@@ -102,6 +102,7 @@ class ACOptions(PerGameCommonOptions):
     rando_start_parts: RandomizeStartingParts
     start_parts_tier: RandomizedStartingPartsTier
     credit_check_amount: CreditCheckAmount
+    death_link: DeathLink
 
     def serialize(self) -> typing.Dict[str, int]:
         return_dict: typing.Dict[str, int] = {}

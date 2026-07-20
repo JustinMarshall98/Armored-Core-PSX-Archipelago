@@ -38,6 +38,9 @@ class Constants:
     KAMUI_MK17_RANK_OFFSET: int = 0x49e90
     SLEDGEHAMMER_RANK_OFFSET: int = 0x49ea4
 
+    HEALTH_OFFSET: int = 0x1A2818 # 2 bytes
+    DESTRUCTION_COUNTDOWN_OFFSET: int = 0x1A26F8
+
     SHOP_OVERWRITE_OPTIONAL_PARTS_OFFSET: int = 0x05b270 # The instruction here performs the check for if optional parts should be removed (if you don't have them in inventory)
     FREESPACE_CODE_OFFSET: int = 0x17f860 # Used for Mission List modification, it's actually where Mail names are stored lol (but we guarded write to prevent Mail from getting messed up)
     MISSION_MENU_HOOK_OFFSET: int = 0x87218 # Used to hack into mission list display routine
@@ -209,3 +212,4 @@ class Constants:
 
     GAME_OPTIONS_KEY: str = "g"
     STARTING_PARTS_KEY: str = "p"
+    DEATHLINK_OPTION_KEY: str = "x"
